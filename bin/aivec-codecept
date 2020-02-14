@@ -1,0 +1,59 @@
+#!/usr/bin/env php
+<?php
+use Garden\Cli\Cli;
+use Aivec\WordPress\CodeceptDocker;
+
+require_once 'vendor/autoload.php';
+
+// first, check caller
+if (!CodeceptDocker::invokedFromProjectRoot()) {
+    echo "\r\n";
+    echo 'FATAL: you can only use this binary from the root of your project.';
+    echo "\r\n";
+    exit(1);
+}
+
+// Define a cli with commands.
+$cli = Cli::create()
+    ->command('create-config')
+    ->description('Create codecept-docker.json config file in project directory.')
+    ->opt('namespace:n', 'Prefix for testing containers', false, 'string')
+    ->opt('type:t', 'Project type. Must be one of "plugin", "theme", or "library"', true, 'string')
+    ->command('init')
+    ->description('Create Docker containers and Codeception scaffolding.')
+    ->command('start')
+    ->description('Start stopped containers.')
+    ->command('stop')
+    ->description('Stop running containers.')
+    ->command('down')
+    ->description('Stops and removes containers. NOTE: you will have to call "init" again if you do this.');
+
+// Parse and return cli args.
+$args = $cli->parse($argv, true);
+
+if ($argv[1] !== 'create-config') {
+    if (!file_exists(CodeceptDocker::getAbsPath() . '/codecept-docker.json')) {
+        echo "\r\n";
+        echo 'FATAL: codecept-docker.json does not exist in project directory. Create one with "aivec-codecept create-config --type=<type>"';
+        echo "\r\n";
+        exit(1);
+    }
+}
+
+switch ($argv[1]) {
+    case 'create-config':
+        CodeceptDocker\CLI\CreateConfig::run($args->getOpt('type'), $args->getOpt('namespace'));
+        break;
+    case 'init':
+        (new CodeceptDocker\CLI\Docker(new CodeceptDocker()))->init();
+        break;
+    case 'start':
+        (new CodeceptDocker\CLI\Docker(new CodeceptDocker()))->start();
+        break;
+    case 'stop':
+        (new CodeceptDocker\CLI\Docker(new CodeceptDocker()))->stop();
+        break;
+    case 'down':
+        (new CodeceptDocker\CLI\Docker(new CodeceptDocker()))->down();
+        break;
+}

@@ -1,0 +1,14 @@
+{
+  "namespace": "sample",
+  "projectType": "plugin",
+  "downloadPlugins": ["wp-multibyte-patch", "another-wp-official-plugin"],
+  "ftp": [
+    {
+      "host": "samplehost.ftp",
+      "user": "sampleuser",
+      "password": "samplepassword",
+      "plugins": ["relative/path/to/pluginzip", "relative/path/to/pluginzip"],
+      "themes": ["relative/path/to/themezip", "relative/path/to/themezip"]
+    }
+  ]
+}

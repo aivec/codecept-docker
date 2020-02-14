@@ -1,0 +1,23 @@
+{
+  "name": "aivec/codecept-docker",
+  "description": "Codeception WordPress testing with Docker.",
+  "type": "library",
+  "license": "GPL-2.0-only",
+  "authors": [
+    {
+      "name": "Evan Shaw",
+      "email": "evandanielshaw@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+			"Aivec\\WordPress\\": "src"
+		}
+  },
+  "require": {
+    "vanilla/garden-cli": "^2.2"
+  },
+  "bin": [
+    "bin/aivec-codecept"
+  ]
+}
