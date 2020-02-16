@@ -71,7 +71,7 @@ class Docker {
         
         $res = [];
         exec("docker network inspect bridge -f '{{ (index .IPAM.Config 0).Gateway }}'", $res);
-        $bridgeip = $res[0];
+        $bridgeip = !empty($res[0]) ? '--env DOCKER_BRIDGE_IP=' . $res[0] : '';
         
         foreach ($this->config->dockermeta as $type => $info) {
             // create and run mysql container
@@ -91,16 +91,44 @@ class Docker {
                 --env WORDPRESS_DB_USER=root \
                 --env WORDPRESS_DB_PASSWORD=root \
                 --env WORDPRESS_DB_NAME=' . $info['dbname'] . ' \
-                --env DOCKER_BRIDGE_IP=' . $bridgeip . ' \
+                ' . $bridgeip . ' \
                 --env FTP_CONFIGS=\'' . json_encode($this->config->ftp) . '\' \
                 --env LANG=' . $this->config->lang . ' \
                 ' . $pvolume . ' wpcodecept');
+            
+            // change ownership of wp-content and plugins/themes directories to www-data:www-data so
+            // WP-CLI doesn't fail
+            passthru('docker exec -it ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content');
+            passthru('docker exec -it ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/plugins');
+            passthru('docker exec -it ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/themes');
         }
-
-
+        
         $this->dockerExec('composer require --dev lucatume/wp-browser');
         $this->generateScaffolding();
         passthru('composer dump-autoload --optimize');
+
+        // make WP-CLI containers
+        $this->wpAcceptanceCLI('core install \
+            --url=' . $this->config->dockermeta['acceptance']['containers']['wordpress'] . ' \
+            --title=Tests \
+            --admin_user=root --admin_password=root \
+            --admin_email=admin@example.com');
+        $this->wpIntegrationCLI('core install \
+            --url=' . $this->config->dockermeta['integration']['containers']['wordpress'] . ' \
+            --title=Tests \
+            --admin_user=root --admin_password=root \
+            --admin_email=admin@example.com');
+        
+        $this->wpAcceptanceCLI('language core install ' . $this->config->lang);
+        $this->wpAcceptanceCLI('site switch-language ' . $this->config->lang);
+        $this->wpIntegrationCLI('language core install ' . $this->config->lang);
+        $this->wpIntegrationCLI('site switch-language ' . $this->config->lang);
+        foreach ($this->config->downloadPlugins as $plugin) {
+            $this->wpAcceptanceCLI('plugin install ' . $plugin);
+            $this->wpAcceptanceCLI('plugin activate ' . $plugin);
+            $this->wpIntegrationCLI('plugin install ' . $plugin);
+            $this->wpIntegrationCLI('plugin activate ' . $plugin);
+        }
     }
 
     /**
@@ -137,8 +165,8 @@ class Docker {
         $gitignore = "*\n";
         $gitignore .= '!.gitignore';
 
-        if (!file_exists(CodeceptDocker::getAbsPath() . '/codeception.dist.yml')) {
-            $this->dockerExec('cp ' . $vendordir . '/conf/codeception.dist.yml codeception.dist.yml');
+        if (!file_exists(CodeceptDocker::getAbsPath() . '/codeception.yml')) {
+            $this->dockerExec('cp ' . $vendordir . '/conf/codeception.yml codeception.yml');
         }
         if (!file_exists(CodeceptDocker::getAbsPath() . '/tests/acceptance.suite.yml')) {
             $this->dockerExec('cp ' . $vendordir . '/conf/acceptance.suite.yml tests/acceptance.suite.yml');
@@ -154,11 +182,11 @@ class Docker {
         }
 
         if (!is_dir(CodeceptDocker::getAbsPath() . '/tests/_support')) {
-            $this->dockerExec('./vendor/bin/codecept g:helper Acceptance');
-            $this->dockerExec('./vendor/bin/codecept g:helper Functional');
-            $this->dockerExec('./vendor/bin/codecept g:helper Unit');
-            $this->dockerExec('./vendor/bin/codecept g:helper Wpunit');
-            $this->dockerExec('./vendor/bin/codecept build');
+            $this->codecept('g:helper Acceptance');
+            $this->codecept('g:helper Functional');
+            $this->codecept('g:helper Unit');
+            $this->codecept('g:helper Wpunit');
+            $this->codecept('build');
             @file_put_contents(
                 CodeceptDocker::getAbsPath() . '/tests/_support/_generated/.gitignore',
                 $gitignore
@@ -173,6 +201,55 @@ class Docker {
             $this->dockerExec('mkdir -p tests/_output');
             $this->dockerExec('touch tests/_output/.gitkeep');
         }
+
+        // generate sample tests
+        $this->codecept('g:wpunit wpunit Sample');
+        $this->codecept('g:test acceptance Sample');
+        $this->codecept('g:test functional Sample');
+        $this->codecept('g:test unit Sample');
+    }
+
+    /**
+     * Passes command/args to wp-cli container that operates on both acceptance and
+     * integration WordPress installs
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @param string $command
+     * @return void
+     */
+    public function wpcli($command) {
+        $this->wpAcceptanceCLI($command);
+        $this->wpIntegrationCLI($command);
+    }
+
+    /**
+     * Spins-up wp-cli container and executes command for acceptance install
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @param string $command
+     * @return void
+     */
+    public function wpAcceptanceCLI($command) {
+        passthru('docker run -it --rm \
+            --volumes-from ' . $this->config->dockermeta['acceptance']['containers']['wordpress'] . ' \
+            --network ' . $this->config->network . ' \
+            --user 33:33 -e HOME=/tmp \
+            wordpress:cli ' . $command);
+    }
+
+    /**
+     * Spins-up wp-cli container and executes command for integration install
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @param string $command
+     * @return void
+     */
+    public function wpIntegrationCLI($command) {
+        passthru('docker run -it --rm \
+            --volumes-from ' . $this->config->dockermeta['integration']['containers']['wordpress'] . ' \
+            --network ' . $this->config->network . ' \
+            --user 33:33 -e HOME=/tmp \
+            wordpress:cli ' . $command);
     }
 
     /**
@@ -229,5 +306,16 @@ class Docker {
             passthru('docker rm ' . $info['containers']['db']);
         }
         passthru('docker network rm ' . $this->config->network);
+    }
+
+    /**
+     * Passes command as is to codecept script in Docker container
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @param string $command raw codecept command
+     * @return void
+     */
+    public function codecept($command) {
+        $this->dockerExec('./vendor/bin/codecept ' . $command);
     }
 }

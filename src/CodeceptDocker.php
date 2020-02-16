@@ -63,6 +63,13 @@ class CodeceptDocker {
     public $ftp = [];
 
     /**
+     * Plugins to download with wp-cli
+     *
+     * @var array
+     */
+    public $downloadPlugins = [];
+
+    /**
      * Default language to activate
      *
      * @var string
@@ -86,6 +93,7 @@ class CodeceptDocker {
         $this->projectType = $this->conf['projectType'];
         $this->lang = !empty($this->conf['language']) ? $this->conf['language'] : $this->lang;
         $this->ftp = !empty($this->conf['ftp']) ? $this->conf['ftp'] : $this->ftp;
+        $this->downloadPlugins = !empty($this->conf['downloadPlugins']) ? $this->conf['downloadPlugins'] : $this->downloadPlugins;
         
         $this->network = $this->namespace . '_wpcodecept-network';
         $types = ['acceptance', 'integration'];
