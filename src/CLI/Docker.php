@@ -34,10 +34,10 @@ class Docker {
         $pvolumes = [];
         // $initscript = CodeceptDocker::getAbsPath() . CodeceptDocker::VENDORDIR . '/initwp.sh';
         // $pvolumes = ['-v ' . $initscript . ':/docker-entrypoint-initwp.d/initwp.sh'];
-        $composerCacheDir = CodeceptDocker\Utils::getCacheDir();
-        if (!empty($composerCacheDir)) {
-            $pvolumes[] = '-v ' . $composerCacheDir . ':/.composer/cache:rw';
-        }
+        // $composerCacheDir = CodeceptDocker\Utils::getCacheDir();
+        // if (!empty($composerCacheDir)) {
+        //     $pvolumes[] = '-v ' . $composerCacheDir . ':/.composer/cache:rw';
+        // }
         $pvolume = '';
         @mkdir(CodeceptDocker::getAbsPath() . '/tests', 0755);
         switch ($this->config->projectType) {
@@ -103,7 +103,7 @@ class Docker {
             passthru('docker exec -it ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/themes');
         }
         
-        $this->dockerExec('composer require --dev lucatume/wp-browser');
+        passthru('composer require --dev lucatume/wp-browser');
         $this->generateScaffolding();
         passthru('composer dump-autoload --optimize');
 

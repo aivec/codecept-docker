@@ -15,7 +15,8 @@
 		}
   },
   "require": {
-    "vanilla/garden-cli": "^2.2"
+    "vanilla/garden-cli": "^2.2",
+    "lucatume/wp-browser": "^2.2"
   },
   "bin": [
     "bin/aivec-codecept"
