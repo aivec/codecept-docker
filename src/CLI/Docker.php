@@ -98,12 +98,11 @@ class Docker {
             
             // change ownership of wp-content and plugins/themes directories to www-data:www-data so
             // WP-CLI doesn't fail
-            passthru('docker exec -it ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content');
-            passthru('docker exec -it ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/plugins');
-            passthru('docker exec -it ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/themes');
+            passthru('docker exec -i ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content');
+            passthru('docker exec -i ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/plugins');
+            passthru('docker exec -i ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/themes');
         }
         
-        passthru('composer require --dev lucatume/wp-browser');
         $this->generateScaffolding();
         passthru('composer dump-autoload --optimize');
 
@@ -200,6 +199,10 @@ class Docker {
         if (!is_dir(CodeceptDocker::getAbsPath() . '/tests/_output')) {
             $this->dockerExec('mkdir -p tests/_output');
             $this->dockerExec('touch tests/_output/.gitkeep');
+            @file_put_contents(
+                CodeceptDocker::getAbsPath() . '/tests/_output/.gitignore',
+                $gitignore
+            );
         }
 
         // generate sample tests
@@ -230,7 +233,7 @@ class Docker {
      * @return void
      */
     public function wpAcceptanceCLI($command) {
-        passthru('docker run -it --rm \
+        passthru('docker run -i --rm \
             --volumes-from ' . $this->config->dockermeta['acceptance']['containers']['wordpress'] . ' \
             --network ' . $this->config->network . ' \
             --user 33:33 -e HOME=/tmp \
@@ -245,7 +248,7 @@ class Docker {
      * @return void
      */
     public function wpIntegrationCLI($command) {
-        passthru('docker run -it --rm \
+        passthru('docker run -i --rm \
             --volumes-from ' . $this->config->dockermeta['integration']['containers']['wordpress'] . ' \
             --network ' . $this->config->network . ' \
             --user 33:33 -e HOME=/tmp \
@@ -262,7 +265,7 @@ class Docker {
     public function dockerExec($command) {
         $path = $this->config->projectType === 'theme' ? CodeceptDocker::WPROOT . '/wp-content/themes/' : CodeceptDocker::WPROOT . '/wp-content/plugins/';
         $path .= CodeceptDocker::getWorkingDirname();
-        $dockerexec = 'docker exec -it --user 1000:1000 ' . $this->config->dockermeta['integration']['containers']['wordpress'] . ' /bin/bash -c \'cd ' . $path . '&& ';
+        $dockerexec = 'docker exec -i --user 1000:1000 ' . $this->config->dockermeta['integration']['containers']['wordpress'] . ' /bin/bash -c \'cd ' . $path . '&& ';
         passthru($dockerexec . $command . '\'');
     }
     
