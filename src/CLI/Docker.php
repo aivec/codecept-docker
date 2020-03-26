@@ -1,7 +1,7 @@
 <?php
-namespace Aivec\WordPress\CodeceptDocker\CLI;
+namespace Aivec\WordPress\Codeception\CLI;
 
-use Aivec\WordPress\CodeceptDocker;
+use Aivec\WordPress\Codeception\CodeceptDocker;
 
 /**
  * CLI methods related to Docker commands
@@ -32,12 +32,6 @@ class Docker {
      */
     public function init() {
         $pvolumes = [];
-        // $initscript = CodeceptDocker::getAbsPath() . CodeceptDocker::VENDORDIR . '/initwp.sh';
-        // $pvolumes = ['-v ' . $initscript . ':/docker-entrypoint-initwp.d/initwp.sh'];
-        // $composerCacheDir = CodeceptDocker\Utils::getCacheDir();
-        // if (!empty($composerCacheDir)) {
-        //     $pvolumes[] = '-v ' . $composerCacheDir . ':/.composer/cache:rw';
-        // }
         $pvolume = '';
         @mkdir(CodeceptDocker::getAbsPath() . '/tests', 0755);
         switch ($this->config->projectType) {
@@ -181,8 +175,6 @@ class Docker {
         }
 
         if (!is_dir(CodeceptDocker::getAbsPath() . '/tests/_support')) {
-            $this->codecept('g:helper Acceptance');
-            $this->codecept('g:helper Functional');
             $this->codecept('g:helper Unit');
             $this->codecept('g:helper Wpunit');
             $this->codecept('build');
@@ -207,8 +199,6 @@ class Docker {
 
         // generate sample tests
         $this->codecept('g:wpunit wpunit Sample');
-        $this->codecept('g:test acceptance Sample');
-        $this->codecept('g:test functional Sample');
         $this->codecept('g:test unit Sample');
     }
 
@@ -309,6 +299,17 @@ class Docker {
             passthru('docker rm ' . $info['containers']['db']);
         }
         passthru('docker network rm ' . $this->config->network);
+    }
+
+    /**
+     * Updates wordpress:latest and wordpress:cli images
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @return void
+     */
+    public function updateImages() {
+        passthru('docker image pull wordpress');
+        passthru('docker image pull wordpress:cli');
     }
 
     /**

@@ -1,5 +1,5 @@
 <?php
-namespace Aivec\WordPress;
+namespace Aivec\WordPress\Codeception;
 
 /**
  * Holds configuration objects and convenience methods for CLI classes

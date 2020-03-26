@@ -1,7 +1,7 @@
 <?php
-namespace Aivec\WordPress\CodeceptDocker\CLI;
+namespace Aivec\WordPress\Codeception\CLI;
 
-use Aivec\WordPress\CodeceptDocker;
+use Aivec\WordPress\Codeception\CodeceptDocker;
 
 /**
  * Creates codecept-docker.json config file in project root

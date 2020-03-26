@@ -1,7 +1,8 @@
 #!/usr/bin/env php
 <?php
 use Garden\Cli\Cli;
-use Aivec\WordPress\CodeceptDocker;
+use Aivec\WordPress\Codeception;
+use Aivec\WordPress\Codeception\CodeceptDocker;
 
 require_once 'vendor/autoload.php';
 
@@ -20,15 +21,17 @@ $cli = Cli::create()
     ->opt('namespace:n', 'Prefix for testing containers', false, 'string')
     ->opt('type:t', 'Project type. Must be one of "plugin", "theme", or "library"', true, 'string')
     ->command('init')
-    ->description('Create Docker containers and Codeception scaffolding.')
+    ->description('Create Docker containers and Codeception scaffolding')
     ->command('start')
-    ->description('Start stopped containers.')
+    ->description('Start stopped containers')
     ->command('stop')
-    ->description('Stop running containers.')
+    ->description('Stop running containers')
     ->command('down')
-    ->description('Stops and removes containers. NOTE: you will have to call "init" again if you do this.')
+    ->description('Stops and removes containers. NOTE: you will have to call "init" again if you do this')
+    ->command('update')
+    ->description('Updates wordpress and wp-cli Docker images to latest')
     ->command('codecept')
-    ->description('Calls and passes args to codecept script from within Docker container.')
+    ->description('Calls and passes args to codecept script from within Docker container')
     ->command('wp-cli')
     ->description('Runs and passes command/arguments to wp-cli container for Docker installs');
 
@@ -46,24 +49,27 @@ if ($argv[1] !== 'create-config') {
 
 switch ($argv[1]) {
     case 'create-config':
-        CodeceptDocker\CLI\CreateConfig::run($args->getOpt('type'), $args->getOpt('namespace'));
+        Codeception\CLI\CreateConfig::run($args->getOpt('type'), $args->getOpt('namespace'));
         break;
     case 'init':
-        (new CodeceptDocker\CLI\Docker(new CodeceptDocker()))->init();
+        (new Codeception\CLI\Docker(new CodeceptDocker()))->init();
         break;
     case 'start':
-        (new CodeceptDocker\CLI\Docker(new CodeceptDocker()))->start();
+        (new Codeception\CLI\Docker(new CodeceptDocker()))->start();
         break;
     case 'stop':
-        (new CodeceptDocker\CLI\Docker(new CodeceptDocker()))->stop();
+        (new Codeception\CLI\Docker(new CodeceptDocker()))->stop();
         break;
     case 'down':
-        (new CodeceptDocker\CLI\Docker(new CodeceptDocker()))->down();
+        (new Codeception\CLI\Docker(new CodeceptDocker()))->down();
+        break;
+    case 'update':
+        (new Codeception\CLI\Docker(new CodeceptDocker()))->updateImages();
         break;
     case 'codecept':
-        (new CodeceptDocker\CLI\Docker(new CodeceptDocker()))->codecept(join(' ', array_slice($argv, 2)));
+        (new Codeception\CLI\Docker(new CodeceptDocker()))->codecept(join(' ', array_slice($argv, 2)));
         break;
     case 'wp-cli':
-        (new CodeceptDocker\CLI\Docker(new CodeceptDocker()))->wpcli(join(' ', array_slice($argv, 2)));
+        (new Codeception\CLI\Docker(new CodeceptDocker()))->wpcli(join(' ', array_slice($argv, 2)));
         break;
 }
