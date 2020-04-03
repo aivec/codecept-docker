@@ -177,6 +177,8 @@ class Docker {
         if (!is_dir(CodeceptDocker::getAbsPath() . '/tests/_support')) {
             $this->codecept('g:helper Unit');
             $this->codecept('g:helper Wpunit');
+            $this->codecept('g:helper Acceptance');
+            $this->codecept('g:helper Functional');
             $this->codecept('build');
             @file_put_contents(
                 CodeceptDocker::getAbsPath() . '/tests/_support/_generated/.gitignore',
