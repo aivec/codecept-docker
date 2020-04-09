@@ -9,7 +9,7 @@ require_once 'vendor/autoload.php';
 // first, check caller
 if (!CodeceptDocker::invokedFromProjectRoot()) {
     echo "\r\n";
-    echo 'FATAL: you can only use this binary from the root of your project.';
+    echo 'FATAL: you can only use this script from the root of your project.';
     echo "\r\n";
     exit(1);
 }
@@ -22,12 +22,14 @@ $cli = Cli::create()
     ->opt('type:t', 'Project type. Must be one of "plugin", "theme", or "library"', true, 'string')
     ->command('init')
     ->description('Create Docker containers and Codeception scaffolding')
+    ->command('up')
+    ->description('Create Docker containers. If you also want Codeception scaffolding, use "init" instead.')
     ->command('start')
     ->description('Start stopped containers')
     ->command('stop')
     ->description('Stop running containers')
     ->command('down')
-    ->description('Stops and removes containers. NOTE: you will have to call "init" again if you do this')
+    ->description('Stops and removes containers. NOTE: you will have to call "up" again if you do this')
     ->command('update')
     ->description('Updates wordpress and wp-cli Docker images to latest')
     ->command('codecept')
@@ -53,6 +55,9 @@ switch ($argv[1]) {
         break;
     case 'init':
         (new Codeception\CLI\Docker(new CodeceptDocker()))->init();
+        break;
+    case 'up':
+        (new Codeception\CLI\Docker(new CodeceptDocker()))->createEnvironments();
         break;
     case 'start':
         (new Codeception\CLI\Docker(new CodeceptDocker()))->start();

@@ -25,12 +25,12 @@ class Docker {
     }
 
     /**
-     * Initializes Docker containers and creates Codeception scaffolding
+     * Spins up docker containers
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @return void
      */
-    public function init() {
+    public function createEnvironments() {
         $pvolumes = [];
         $pvolume = '';
         @mkdir(CodeceptDocker::getAbsPath() . '/tests', 0755);
@@ -96,7 +96,16 @@ class Docker {
             passthru('docker exec -i ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/plugins');
             passthru('docker exec -i ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/themes');
         }
-        
+    }
+
+    /**
+     * Initializes Docker containers and creates Codeception scaffolding
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @return void
+     */
+    public function init() {
+        $this->createEnvironments();
         $this->generateScaffolding();
         passthru('composer dump-autoload --optimize');
 
@@ -260,7 +269,7 @@ class Docker {
         $dockerexec = 'docker exec -i --user 1000:1000 ' . $this->config->dockermeta['integration']['containers']['wordpress'] . ' /bin/bash -c \'cd ' . $path . '&& ';
         passthru($dockerexec . $command . '\'');
     }
-    
+
     /**
      * Starts stopped Codeception Docker containers
      *
