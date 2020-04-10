@@ -21,7 +21,7 @@ class CreateConfig {
         $config = [
             'namespace' => !empty($namespace) ? $namespace : CodeceptDocker::getWorkingDirname(),
             'projectType' => $project_type,
-            'language' => 'en',
+            'language' => 'en_US',
             'downloadPlugins' => [],
             'ftp' => [],
         ];

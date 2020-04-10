@@ -85,6 +85,7 @@ class Docker {
                 --env WORDPRESS_DB_USER=root \
                 --env WORDPRESS_DB_PASSWORD=root \
                 --env WORDPRESS_DB_NAME=' . $info['dbname'] . ' \
+                --env XDEBUG_PORT=' . $info['xdebugport'] . ' \
                 ' . $bridgeip . ' \
                 --env FTP_CONFIGS=\'' . json_encode($this->config->ftp) . '\' \
                 --env LANG=' . $this->config->lang . ' \

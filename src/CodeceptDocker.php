@@ -77,6 +77,16 @@ class CodeceptDocker {
     public $lang = 'en';
 
     /**
+     * Port map for xdebug
+     *
+     * @var int[]
+     */
+    public $xdebugPortMap = [
+        'acceptance' => 4300,
+        'integration' => 4400,
+    ];
+
+    /**
      * Grab configuration file contents
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
@@ -102,6 +112,7 @@ class CodeceptDocker {
             $this->dockermeta[$type]['containers']['wordpress'] = $this->namespace . '-' . $type . '-tests-wordpress';
             $this->dockermeta[$type]['volumes']['db'] = $this->namespace . '_wp_' . $type . '_db';
             $this->dockermeta[$type]['dbname'] = $type . '_tests';
+            $this->dockermeta[$type]['xdebugport'] = $this->xdebugPortMap[$type];
         }
     }
 
