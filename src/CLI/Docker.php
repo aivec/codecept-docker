@@ -96,6 +96,21 @@ class Docker {
             passthru('docker exec -i ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/plugins');
             passthru('docker exec -i ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/themes');
         }
+
+        // install WordPress core
+        $this->wpAcceptanceCLI('core install \
+            --url=' . $this->config->dockermeta['acceptance']['containers']['wordpress'] . ' \
+            --title=Tests \
+            --admin_user=root --admin_password=root \
+            --admin_email=admin@example.com');
+        $this->wpIntegrationCLI('core install \
+            --url=' . $this->config->dockermeta['integration']['containers']['wordpress'] . ' \
+            --title=Tests \
+            --admin_user=root --admin_password=root \
+            --admin_email=admin@example.com');
+        
+        $this->installAndActivateLanguage();
+        $this->installAndActivatePlugins();
     }
 
     /**
@@ -108,23 +123,28 @@ class Docker {
         $this->createEnvironments();
         $this->generateScaffolding();
         passthru('composer dump-autoload --optimize');
+    }
 
-        // make WP-CLI containers
-        $this->wpAcceptanceCLI('core install \
-            --url=' . $this->config->dockermeta['acceptance']['containers']['wordpress'] . ' \
-            --title=Tests \
-            --admin_user=root --admin_password=root \
-            --admin_email=admin@example.com');
-        $this->wpIntegrationCLI('core install \
-            --url=' . $this->config->dockermeta['integration']['containers']['wordpress'] . ' \
-            --title=Tests \
-            --admin_user=root --admin_password=root \
-            --admin_email=admin@example.com');
-        
+    /**
+     * Installs and activates language defined in `codecept-docker.json` config file
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @return void
+     */
+    public function installAndActivateLanguage() {
         $this->wpAcceptanceCLI('language core install ' . $this->config->lang);
         $this->wpAcceptanceCLI('site switch-language ' . $this->config->lang);
         $this->wpIntegrationCLI('language core install ' . $this->config->lang);
         $this->wpIntegrationCLI('site switch-language ' . $this->config->lang);
+    }
+
+    /**
+     * Installs and activates plugins defined in `codecept-docker.json` config file
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @return void
+     */
+    public function installAndActivatePlugins() {
         foreach ($this->config->downloadPlugins as $plugin) {
             $this->wpAcceptanceCLI('plugin install ' . $plugin);
             $this->wpAcceptanceCLI('plugin activate ' . $plugin);
