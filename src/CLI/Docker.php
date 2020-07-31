@@ -98,7 +98,26 @@ class Docker {
             passthru('docker exec -i ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/themes');
         }
 
+        print("Waiting for MySQL containers to be ready...\n");
+        foreach ($this->config->dockermeta as $type => $info) {
+            $sleep = [];
+            $sleep[] = 'docker exec -i --user 1000:1000 ' . $info['containers']['wordpress'] . ' /bin/bash -c';
+            $sleep[] = '\'maxretries=5;';
+            $sleep[] = 'retries=0;';
+            $sleep[] = 'while ! mysqladmin ping -h"' . $info['containers']['db'] . '" --silent; do';
+            $sleep[] = 'if [ "$retries" -gt "$maxretries" ]; then';
+            $sleep[] = 'echo "Unable to connect to MySQL database. Aborting.";';
+            $sleep[] = 'exit 1;';
+            $sleep[] = 'fi;';
+            $sleep[] = 'sleep 3;';
+            $sleep[] = 'retries=$(($retries + 1));';
+            $sleep[] = 'done\'';
+        }
+
+        passthru(join(' ', $sleep));
+        
         // install WordPress core
+        print("Installing WordPress...\n");
         $this->wpAcceptanceCLI('core install \
             --url=' . $this->config->dockermeta['acceptance']['containers']['wordpress'] . ' \
             --title=Tests \
@@ -109,7 +128,7 @@ class Docker {
             --title=Tests \
             --admin_user=root --admin_password=root \
             --admin_email=admin@example.com');
-        
+
         $this->installAndActivateLanguage();
         $this->installAndActivatePlugins();
     }
@@ -175,7 +194,7 @@ class Docker {
         $env[] = 'TEST_DB_PASSWORD="root"';
         $env[] = 'TEST_TABLE_PREFIX="wp_"';
         $env[] = 'TEST_SITE_WP_URL="http://' . $this->config->dockermeta['acceptance']['containers']['wordpress'] . '"';
-        $env[] = 'TEST_SITE_WP_DOMAIN="http://' . $this->config->dockermeta['acceptance']['containers']['wordpress'] . '"';
+        $env[] = 'TEST_SITE_WP_DOMAIN="http://' . $this->config->dockermeta['integration']['containers']['wordpress'] . '"';
         $env[] = 'TEST_SITE_ADMIN_EMAIL="admin@example.com"';
         $env[] = 'TEST_SITE_ADMIN_USERNAME="root"';
         $env[] = 'TEST_SITE_ADMIN_PASSWORD="root"';
