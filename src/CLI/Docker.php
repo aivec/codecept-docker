@@ -171,8 +171,10 @@ class Docker {
             $this->wpIntegrationCLI('plugin install ' . $plugin);
             $this->wpIntegrationCLI('plugin activate ' . $plugin);
         }
-    }
 
+        
+    }
+    
     /**
      * Copies test scaffolding folders and files to project dir if they don't exist already
      *
