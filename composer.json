@@ -11,14 +11,22 @@
   ],
   "autoload": {
     "psr-4": {
-			"Aivec\\WordPress\\Codeception\\": "src"
-		}
+      "Aivec\\WordPress\\CodeceptDocker\\": "src"
+    }
   },
   "require": {
     "vanilla/garden-cli": "^2.2",
-    "lucatume/wp-browser": "^2.6"
+    "lucatume/wp-browser": "^2.6",
+    "vlucas/valitron": "^1.4"
   },
   "bin": [
     "bin/aivec-codecept"
-  ]
+  ],
+  "scripts": {
+    "lint": "phpcs -s --standard=Aivec-Core-7 src",
+    "lint:fix": "phpcbf --standard=Aivec-Core-7 src"
+  },
+  "require-dev": {
+    "aivec/phpcs-wp": "^2.0"
+  }
 }

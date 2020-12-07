@@ -1,12 +1,19 @@
 {
   "namespace": "sample",
   "projectType": "plugin",
+  "language": "en_US",
   "downloadPlugins": ["wp-multibyte-patch", "another-wp-official-plugin"],
+  "downloadThemes": ["wp-official-theme", "another-wp-official-theme"],
+  "ssh": [
+    {
+      "confpath": "/relative/or/absolute/path/to/sshconfig",
+      "plugins": ["relative/path/to/pluginzip", "relative/path/to/pluginzip"],
+      "themes": ["relative/path/to/themezip", "relative/path/to/themezip"]
+    }
+  ],
   "ftp": [
     {
-      "host": "samplehost.ftp",
-      "user": "sampleuser",
-      "password": "samplepassword",
+      "confpath": "relative/or/absolute/path/to/ftpconfig",
       "plugins": ["relative/path/to/pluginzip", "relative/path/to/pluginzip"],
       "themes": ["relative/path/to/themezip", "relative/path/to/themezip"]
     }

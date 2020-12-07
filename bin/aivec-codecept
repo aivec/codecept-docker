@@ -1,24 +1,21 @@
 #!/usr/bin/env php
 <?php
+
 use Garden\Cli\Cli;
-use Aivec\WordPress\Codeception;
-use Aivec\WordPress\Codeception\CodeceptDocker;
+use Aivec\WordPress\CodeceptDocker\Config;
+use Aivec\WordPress\CodeceptDocker\Logger;
+use Aivec\WordPress\CodeceptDocker\CLI\Client;
+use Aivec\WordPress\CodeceptDocker\CLI\Commands;
 
 require_once 'vendor/autoload.php';
 
-// first, check caller
-if (!CodeceptDocker::invokedFromProjectRoot()) {
-    echo "\r\n";
-    echo 'FATAL: you can only use this script from the root of your project.';
-    echo "\r\n";
-    exit(1);
-}
+$logger = new Logger();
 
 // Define a cli with commands.
 $cli = Cli::create()
     ->command('create-config')
     ->description('Create codecept-docker.json config file in project directory.')
-    ->opt('namespace:n', 'Prefix for testing containers', false, 'string')
+    ->opt('namespace:n', 'Prefix for Docker containers', false, 'string')
     ->opt('type:t', 'Project type. Must be one of "plugin", "theme", or "library"', true, 'string')
     ->command('init')
     ->description('Create Docker containers and Codeception scaffolding')
@@ -40,41 +37,41 @@ $cli = Cli::create()
 // Parse and return cli args.
 $args = $cli->parse($argv, true);
 
-if ($argv[1] !== 'create-config') {
-    if (!file_exists(CodeceptDocker::getAbsPath() . '/codecept-docker.json')) {
-        echo "\r\n";
-        echo 'FATAL: codecept-docker.json does not exist in project directory. Create one with "aivec-codecept create-config --type=<type>"';
-        echo "\r\n";
+if (!in_array($argv[1], ['create-config', 'update'], true)) {
+    if (!file_exists(Client::getAbsPath() . '/codecept-docker.json')) {
+        $logger->error('codecept-docker.json does not exist in project directory. Create one with "aivec-codecept create-config --type=<type>"');
         exit(1);
     }
 }
 
+$client = new Client(new Config());
+
 switch ($argv[1]) {
     case 'create-config':
-        Codeception\CLI\CreateConfig::run($args->getOpt('type'), $args->getOpt('namespace'));
+        Commands\CreateConfig::createConfig((string)$args->getOpt('type'), (string)$args->getOpt('namespace'));
         break;
     case 'init':
-        (new Codeception\CLI\Docker(new CodeceptDocker()))->init();
+        (new Commands\Init(new Commands\CreateEnvironments($client)))->init();
         break;
     case 'up':
-        (new Codeception\CLI\Docker(new CodeceptDocker()))->createEnvironments();
+        (new Commands\CreateEnvironments($client))->createEnvironments();
         break;
     case 'start':
-        (new Codeception\CLI\Docker(new CodeceptDocker()))->start();
+        (new Commands\Start($client))->start();
         break;
     case 'stop':
-        (new Codeception\CLI\Docker(new CodeceptDocker()))->stop();
+        (new Commands\Stop($client))->stop();
         break;
     case 'down':
-        (new Codeception\CLI\Docker(new CodeceptDocker()))->down();
+        (new Commands\Down($client))->down();
         break;
     case 'update':
-        (new Codeception\CLI\Docker(new CodeceptDocker()))->updateImages();
+        Commands\Update::updateImages();
         break;
     case 'codecept':
-        (new Codeception\CLI\Docker(new CodeceptDocker()))->codecept(join(' ', array_slice($argv, 2)));
+        $client->codecept(isset($argv[2]) ? join(' ', array_slice($argv, 2)) : '');
         break;
     case 'wp-cli':
-        (new Codeception\CLI\Docker(new CodeceptDocker()))->wpcli(join(' ', array_slice($argv, 2)));
+        $client->wpcli($argv);
         break;
 }
