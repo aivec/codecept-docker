@@ -27,6 +27,7 @@
     "lint:fix": "phpcbf --standard=Aivec-Core-7 src"
   },
   "require-dev": {
-    "aivec/phpcs-wp": "^2.0"
+    "aivec/phpcs-wp": "^2.0",
+    "phpunit/phpunit": "^9.5"
   }
 }

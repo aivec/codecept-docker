@@ -44,34 +44,32 @@ if (!in_array($argv[1], ['create-config', 'update'], true)) {
     }
 }
 
-$client = new Client(new Config());
-
 switch ($argv[1]) {
     case 'create-config':
         Commands\CreateConfig::createConfig((string)$args->getOpt('type'), (string)$args->getOpt('namespace'));
         break;
     case 'init':
-        (new Commands\Init(new Commands\CreateEnvironments($client)))->init();
+        (new Commands\Init(new Commands\CreateEnvironments((new Client(new Config())))))->init();
         break;
     case 'up':
-        (new Commands\CreateEnvironments($client))->createEnvironments();
+        (new Commands\CreateEnvironments((new Client(new Config()))))->createEnvironments();
         break;
     case 'start':
-        (new Commands\Start($client))->start();
+        (new Commands\Start((new Client(new Config()))))->start();
         break;
     case 'stop':
-        (new Commands\Stop($client))->stop();
+        (new Commands\Stop((new Client(new Config()))))->stop();
         break;
     case 'down':
-        (new Commands\Down($client))->down();
+        (new Commands\Down((new Client(new Config()))))->down();
         break;
     case 'update':
         Commands\Update::updateImages();
         break;
     case 'codecept':
-        $client->codecept(isset($argv[2]) ? join(' ', array_slice($argv, 2)) : '');
+        (new Client(new Config()))->codecept(isset($argv[2]) ? join(' ', array_slice($argv, 2)) : '');
         break;
     case 'wp-cli':
-        $client->wpcli($argv);
+        (new Client(new Config()))->wpcli($argv);
         break;
 }
