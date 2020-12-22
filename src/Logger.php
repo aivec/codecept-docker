@@ -84,27 +84,15 @@ class Logger
     }
 
     /**
-     * Prints context of syntax error
+     * Prints config value error
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
-     * @param mixed $value
-     * @return void
-     */
-    public function logContext($value): void {
-        print "\nvalue: " . (string)$value;
-    }
-
-    /**
-     * Prints syntax error details
-     *
-     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @param string $key Config key
      * @param string $message
-     * @param string $fileName
      * @return void
      */
-    public function syntaxError(string $message, string $fileName): void {
-        print "\n" . $this->getHeaders()['error'] . $fileName . ' SYNTAX ERROR' . "\n";
-        print self::CYAN . 'details: ' . self::NC . $message;
+    public function valueError(string $key, string $message): void {
+        print '[key: ' . $this->yellow('"' . $key . '"') . ']: ' . $message . "\n";
     }
 
     /**
@@ -112,10 +100,10 @@ class Logger
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @param string $message
-     * @return void
+     * @return string
      */
-    public function red(string $message): void {
-        print self::RED . $message . self::NC;
+    public function red(string $message): string {
+        return self::RED . $message . self::NC;
     }
 
     /**
@@ -123,10 +111,10 @@ class Logger
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @param string $message
-     * @return void
+     * @return string
      */
-    public function green(string $message): void {
-        print self::GREEN . $message . self::NC;
+    public function green(string $message): string {
+        return self::GREEN . $message . self::NC;
     }
 
     /**
@@ -134,10 +122,10 @@ class Logger
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @param string $message
-     * @return void
+     * @return string
      */
-    public function cyan(string $message): void {
-        print self::CYAN . $message . self::NC;
+    public function cyan(string $message): string {
+        return self::CYAN . $message . self::NC;
     }
 
     /**
@@ -145,10 +133,10 @@ class Logger
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @param string $message
-     * @return void
+     * @return string
      */
-    public function white(string $message): void {
-        print self::WHITE . $message . self::NC;
+    public function white(string $message): string {
+        return self::WHITE . $message . self::NC;
     }
 
     /**
@@ -156,9 +144,9 @@ class Logger
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @param string $message
-     * @return void
+     * @return string
      */
-    public function yellow(string $message): void {
-        print self::YELLOW . $message . self::NC;
+    public function yellow(string $message): string {
+        return self::YELLOW . $message . self::NC;
     }
 }

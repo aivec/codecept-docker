@@ -23,6 +23,13 @@ class Config
     public const WPROOT = '/var/www/html';
 
     /**
+     * Directory for scripts used during container creation
+     *
+     * @var string
+     */
+    public const EXTRASDIR = self::WPROOT . '/extras';
+
+    /**
      * Associative array parsed from codecept-docker.json configuration file
      *
      * @var array
@@ -56,6 +63,13 @@ class Config
      * @var array
      */
     public $dockermeta = [];
+
+    /**
+     * SSH configs of plugins/themes to download
+     *
+     * @var array
+     */
+    public $ssh = [];
 
     /**
      * FTP configs of plugins/themes to download
@@ -108,6 +122,7 @@ class Config
         $this->projectType = $this->conf['projectType'];
         $this->lang = !empty($this->conf['language']) ? $this->conf['language'] : $this->lang;
         $this->ftp = !empty($this->conf['ftp']) ? $this->conf['ftp'] : $this->ftp;
+        $this->ssh = !empty($this->conf['ssh']) ? $this->conf['ssh'] : $this->ssh;
         $this->downloadPlugins = !empty($this->conf['downloadPlugins']) ? $this->conf['downloadPlugins'] : $this->downloadPlugins;
         $this->downloadThemes = !empty($this->conf['downloadThemes']) ? $this->conf['downloadThemes'] : $this->downloadThemes;
 

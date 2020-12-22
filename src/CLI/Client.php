@@ -84,7 +84,7 @@ class Client
             --volumes-from ' . $this->config->dockermeta['acceptance']['containers']['wordpress'] . ' \
             --network ' . $this->config->network . ' \
             --user 33:33 -e HOME=/tmp \
-            wordpress:cli ' . $command);
+            wordpress:cli wp ' . $command);
     }
 
     /**
@@ -99,7 +99,7 @@ class Client
             --volumes-from ' . $this->config->dockermeta['integration']['containers']['wordpress'] . ' \
             --network ' . $this->config->network . ' \
             --user 33:33 -e HOME=/tmp \
-            wordpress:cli ' . $command);
+            wordpress:cli wp ' . $command);
     }
 
     /**

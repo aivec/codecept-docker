@@ -33,8 +33,8 @@ class CreateEnvironments
      * @return void
      */
     public function createEnvironments(): void {
-        $pvolumes = [];
-        $pvolume = '';
+        $volumes = [];
+        $volume = '';
         @mkdir(Client::getAbsPath() . '/tests', 0755);
         switch ($this->client->getConfig()->projectType) {
             case 'library':
@@ -46,18 +46,26 @@ class CreateEnvironments
                         $pluginfile
                     );
                 }
-                $pvolumes[] = '-v ' . Client::getAbsPath() . '/tests/implementation-plugin' . ':' . Config::WPROOT . '/wp-content/plugins/implementation-plugin';
-                $pvolumes[] = '-v ' . Client::getAbsPath() . ':' . Config::WPROOT . '/wp-content/plugins/' . Client::getWorkingDirname();
+                $volumes[] = '-v ' . Client::getAbsPath() . '/tests/implementation-plugin' . ':' . Config::WPROOT . '/wp-content/plugins/implementation-plugin';
+                $volumes[] = '-v ' . Client::getAbsPath() . ':' . Config::WPROOT . '/wp-content/plugins/' . Client::getWorkingDirname();
                 break;
             case 'plugin':
-                $pvolumes[] = '-v ' . Client::getAbsPath() . ':' . Config::WPROOT . '/wp-content/plugins/' . Client::getWorkingDirname();
+                $volumes[] = '-v ' . Client::getAbsPath() . ':' . Config::WPROOT . '/wp-content/plugins/' . Client::getWorkingDirname();
                 break;
             case 'theme':
-                $pvolumes[] = '-v ' . Client::getAbsPath() . ':' . Config::WPROOT . '/wp-content/themes/' . Client::getWorkingDirname();
+                $volumes[] = '-v ' . Client::getAbsPath() . ':' . Config::WPROOT . '/wp-content/themes/' . Client::getWorkingDirname();
                 break;
         }
 
-        $pvolume = join(' ', $pvolumes);
+        $volumes[] = '-v ' . Client::getAbsPath() . Config::VENDORDIR . '/install_plugins_themes.sh:' . Config::EXTRASDIR . '/install_plugins_themes.sh';
+        if (!empty($this->client->getConfig()->ssh)) {
+            foreach ($this->client->getConfig()->ssh as $sshc) {
+                $sshvpath = Config::EXTRASDIR . '/ssh';
+                $volumes[] = '-v ' . realpath($sshc['privateKeyPath']) . ':' . $sshvpath . '/' . $sshc['privateKeyFilename'];
+            }
+        }
+
+        $volume = join(' ', $volumes);
 
         // build docker image
         passthru('cd ' . Client::getAbsPath() . Config::VENDORDIR . ' && docker build . -t wpcodecept');
@@ -90,8 +98,9 @@ class CreateEnvironments
                 --env XDEBUG_PORT=' . $info['xdebugport'] . ' \
                 ' . $bridgeip . ' \
                 --env FTP_CONFIGS=\'' . json_encode($this->client->getConfig()->ftp) . '\' \
+                --env SSH_CONFIGS=\'' . json_encode($this->client->getConfig()->ssh) . '\' \
                 --env LANG=' . $this->client->getConfig()->lang . ' \
-                ' . $pvolume . ' wpcodecept');
+                ' . $volume . ' wpcodecept');
 
             // change ownership of wp-content and plugins/themes directories to www-data:www-data so
             // WP-CLI doesn't fail
@@ -134,6 +143,7 @@ class CreateEnvironments
         $this->installAndActivateLanguage();
         $this->installAndActivatePlugins();
         $this->installThemes();
+        $this->installPrivatePluginsAndThemes();
     }
 
     /**
@@ -174,6 +184,40 @@ class CreateEnvironments
         foreach ($this->client->getConfig()->downloadThemes as $theme) {
             $this->client->wpAcceptanceCLI('theme install ' . $theme);
             $this->client->wpIntegrationCLI('theme install ' . $theme);
+        }
+    }
+
+    /**
+     * Installs plugins/themes downloaded via SCP after the container has been created
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @return void
+     */
+    public function installPrivatePluginsAndThemes(): void {
+        foreach ($this->client->getConfig()->dockermeta as $type => $info) {
+            passthru('docker exec -i ' . $info['containers']['wordpress'] . ' ./extras/install_plugins_themes.sh');
+        }
+        foreach ((array)$this->client->getConfig()->ssh as $sshc) {
+            if (!empty($sshc['plugins'])) {
+                foreach ((array)$sshc['plugins'] as $pluginpath) {
+                    if ((string)substr($pluginpath, -4) !== '.zip') {
+                        $pluginpath .= '.zip';
+                    }
+                    $plugin = basename($pluginpath);
+                    $this->client->wpAcceptanceCLI('plugin install ' . Config::EXTRASDIR . '/ssh/plugins/' . $plugin);
+                    $this->client->wpIntegrationCLI('plugin install ' . Config::EXTRASDIR . '/ssh/plugins/' . $plugin);
+                }
+            }
+            if (!empty($sshc['themes'])) {
+                foreach ((array)$sshc['themes'] as $themepath) {
+                    if ((string)substr($themepath, -4) !== '.zip') {
+                        $themepath .= '.zip';
+                    }
+                    $theme = basename($themepath);
+                    $this->client->wpAcceptanceCLI('theme install ' . Config::EXTRASDIR . '/ssh/themes/' . $theme);
+                    $this->client->wpIntegrationCLI('theme install ' . Config::EXTRASDIR . '/ssh/themes/' . $theme);
+                }
+            }
         }
     }
 }

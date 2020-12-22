@@ -6,14 +6,9 @@
   "downloadThemes": ["wp-official-theme", "another-wp-official-theme"],
   "ssh": [
     {
-      "confpath": "/relative/or/absolute/path/to/sshconfig",
-      "plugins": ["relative/path/to/pluginzip", "relative/path/to/pluginzip"],
-      "themes": ["relative/path/to/themezip", "relative/path/to/themezip"]
-    }
-  ],
-  "ftp": [
-    {
-      "confpath": "relative/or/absolute/path/to/ftpconfig",
+      "privateKeyPath": "/relative/or/absolute/path/to/privatekeyfile",
+      "user": "bob",
+      "host": "example.com",
       "plugins": ["relative/path/to/pluginzip", "relative/path/to/pluginzip"],
       "themes": ["relative/path/to/themezip", "relative/path/to/themezip"]
     }
