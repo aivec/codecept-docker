@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Name: Codeception library implementation plugin
  * Description: Write tests for non-plugin/non-theme libaries (ie. customizations loaded in functions.php)

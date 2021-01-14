@@ -125,4 +125,27 @@ class ConfigValidator
             $this->logger->warn('codecept-docker.json does not contain a "namespace" field, defaulting to project directory name as a prefix for containers');
         }
     }
+
+    /**
+     * Validates value of `projectType` key in JSON config
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @param string $project_type
+     * @return void
+     */
+    public static function validateProjectType($project_type) {
+        if (empty($project_type)) {
+            echo "\r\n";
+            echo 'FATAL: "projectType" is not defined. "projectType" must be one of "library", "plugin", or "theme"';
+            echo "\r\n";
+            exit(1);
+        }
+
+        if ($project_type !== 'library' && $project_type !== 'plugin' && $project_type !== 'theme') {
+            echo "\r\n";
+            echo 'FATAL: "projectType" must be one of "library", "plugin", or "theme"';
+            echo "\r\n";
+            exit(1);
+        }
+    }
 }
