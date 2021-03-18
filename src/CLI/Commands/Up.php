@@ -8,7 +8,7 @@ use Aivec\WordPress\CodeceptDocker\Config;
 /**
  * Command for creating and setting up Docker images/containers.
  */
-class CreateEnvironments
+class Up
 {
     /**
      * Dependency injected config model
@@ -68,14 +68,14 @@ class CreateEnvironments
         $volume = join(' ', $volumes);
 
         // build docker image
-        passthru('cd ' . Client::getAbsPath() . Config::VENDORDIR . ' && docker build . -t wpcodecept');
+        passthru('cd ' . Client::getAbsPath() . Config::VENDORDIR . ' && docker build --build-arg WP_VERSION=' . $this->client->getConfig()->wordpressVersion . ' . -t wpcodecept');
 
         // create CodeceptDocker network for wordpress-apache container and mysql container
         passthru('docker network create --attachable ' . $this->client->getConfig()->network);
 
         $res = [];
         exec("docker network inspect bridge -f '{{ (index .IPAM.Config 0).Gateway }}'", $res);
-        $bridgeip = !empty($res[0]) ? '--env DOCKER_BRIDGE_IP=' . $res[0] : '';
+        $bridgeip = !empty($res[0]) ? $res[0] : '\'\'';
 
         foreach ($this->client->getConfig()->dockermeta as $type => $info) {
             // create and run mysql container
@@ -85,21 +85,29 @@ class CreateEnvironments
                 --env MYSQL_USER=admin \
                 --env MYSQL_PASSWORD=admin \
                 --env MYSQL_ROOT_PASSWORD=root \
-                -v ' . $info['volumes']['db'] . ':/var/lib/mysql \
                 mysql:5.7');
+
+            $envvars = [
+                'WORDPRESS_DB_HOST' => $info['containers']['db'],
+                'WORDPRESS_DB_USER' => 'root',
+                'WORDPRESS_DB_PASSWORD' => 'root',
+                'WORDPRESS_DB_NAME' => $info['dbname'],
+                'XDEBUG_PORT' => $info['xdebugport'],
+                'FTP_CONFIGS' => '\'' . json_encode($this->client->getConfig()->ftp) . '\'',
+                'SSH_CONFIGS' => '\'' . json_encode($this->client->getConfig()->ssh) . '\'',
+                'LANG' => $this->client->getConfig()->lang,
+                'DOCKER_BRIDGE_IP' => $bridgeip,
+            ];
+
+            $envarsstrings = '--env ' . join(' --env ', array_map(function ($key, $value) {
+                return $key . '=' . $value;
+            }, array_keys($envvars), $envvars));
 
             // create and run WordPress containers
             passthru('docker run -d --name ' . $info['containers']['wordpress'] . ' \
                 --network ' . $this->client->getConfig()->network . ' \
-                --env WORDPRESS_DB_HOST=' . $info['containers']['db'] . ' \
-                --env WORDPRESS_DB_USER=root \
-                --env WORDPRESS_DB_PASSWORD=root \
-                --env WORDPRESS_DB_NAME=' . $info['dbname'] . ' \
-                --env XDEBUG_PORT=' . $info['xdebugport'] . ' \
-                ' . $bridgeip . ' \
-                --env FTP_CONFIGS=\'' . json_encode($this->client->getConfig()->ftp) . '\' \
-                --env SSH_CONFIGS=\'' . json_encode($this->client->getConfig()->ssh) . '\' \
-                --env LANG=' . $this->client->getConfig()->lang . ' \
+                ' . $envarsstrings . ' \
+                --env APACHE_ENV_VARS=' . json_encode(json_encode($envvars)) . ' \
                 ' . $volume . ' wpcodecept');
 
             // change ownership of wp-content and plugins/themes directories to www-data:www-data so

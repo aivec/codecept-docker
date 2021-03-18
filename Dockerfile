@@ -1,4 +1,5 @@
-FROM wordpress:latest
+ARG WP_VERSION=latest
+FROM wordpress:$WP_VERSION
 
 RUN docker-php-ext-install pdo_mysql
 RUN apt-get update && apt-get install -y --no-install-recommends jq lftp unzip mariadb-client ssh

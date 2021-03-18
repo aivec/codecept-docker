@@ -44,6 +44,13 @@ class Config
     public $namespace;
 
     /**
+     * WordPress version for Docker image
+     *
+     * @var string
+     */
+    public $wordpressVersion = 'latest';
+
+    /**
      * Project type. One of 'library', 'plugin', or 'theme'
      *
      * @var string
@@ -125,6 +132,7 @@ class Config
         $this->ssh = !empty($this->conf['ssh']) ? $this->conf['ssh'] : $this->ssh;
         $this->downloadPlugins = !empty($this->conf['downloadPlugins']) ? $this->conf['downloadPlugins'] : $this->downloadPlugins;
         $this->downloadThemes = !empty($this->conf['downloadThemes']) ? $this->conf['downloadThemes'] : $this->downloadThemes;
+        $this->wordpressVersion = !empty($this->conf['wordpressVersion']) ? $this->conf['wordpressVersion'] : $this->wordpressVersion;
 
         $this->network = $this->namespace . '_wpcodecept-network';
         $types = ['acceptance', 'integration'];

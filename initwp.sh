@@ -1,5 +1,7 @@
 #!/bin/bash
 
+su - root
+
 # mute CMD from official wordpress image
 sed -i -e 's/^exec "$@"/#exec "$@"/g' /usr/local/bin/docker-entrypoint.sh
 
@@ -13,7 +15,7 @@ echo xdebug.client_port=${XDEBUG_PORT} >> /usr/local/etc/php/conf.d/xdebug.ini
 if [[ ! -z ${APACHE_ENV_VARS} ]]; then
     echo $APACHE_ENV_VARS | jq -r 'keys[]' | while read key; do
         val=$(echo $APACHE_ENV_VARS | jq -r ".[\"$key\"]")
-        echo "export ${key}=${val}" | sudo tee -a /etc/apache2/envvars >/dev/null
+        echo "export ${key}=${val}" | tee -a /etc/apache2/envvars >/dev/null
     done
 fi
 

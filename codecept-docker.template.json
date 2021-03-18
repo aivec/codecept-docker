@@ -1,5 +1,6 @@
 {
   "namespace": "sample",
+  "wordpressVersion": "latest",
   "projectType": "plugin",
   "language": "en_US",
   "downloadPlugins": ["wp-multibyte-patch", "another-wp-official-plugin"],

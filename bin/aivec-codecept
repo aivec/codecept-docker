@@ -49,10 +49,10 @@ switch ($argv[1]) {
         Commands\CreateConfig::createConfig((string)$args->getOpt('type'), (string)$args->getOpt('namespace'));
         break;
     case 'init':
-        (new Commands\Init(new Commands\CreateEnvironments((new Client(new Config())))))->init();
+        (new Commands\Init(new Commands\Up((new Client(new Config())))))->init();
         break;
     case 'up':
-        (new Commands\CreateEnvironments((new Client(new Config()))))->createEnvironments();
+        (new Commands\Up((new Client(new Config()))))->createEnvironments();
         break;
     case 'start':
         (new Commands\Start((new Client(new Config()))))->start();

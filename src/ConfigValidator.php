@@ -60,11 +60,12 @@ class ConfigValidator
         $v->rules([
             'required' => [
                 ['projectType'],
-                ['ssh.*.privateKeyPath'],
+                /* ['ssh.*.privateKeyPath'],
                 ['ssh.*.user'],
-                ['ssh.*.host'],
+                ['ssh.*.host'], */
             ],
             'optional' => [
+                ['wordpressVersion'],
                 ['ssh'],
                 ['ftp'],
                 ['downloadPlugins'],

@@ -20,16 +20,16 @@ class Init
     /**
      * Object that holds methods for environment creation/initialization
      *
-     * @var CreateEnvironments
+     * @var Up
      */
     private $runner;
 
     /**
      * Injects runner
      *
-     * @param CreateEnvironments $runner
+     * @param Up $runner
      */
-    public function __construct(CreateEnvironments $runner) {
+    public function __construct(Up $runner) {
         $this->runner = $runner;
         $this->client = $this->runner->client;
     }
