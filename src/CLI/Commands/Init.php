@@ -43,7 +43,6 @@ class Init
     public function init() {
         $this->runner->createEnvironments();
         $this->generateScaffolding();
-        passthru('composer dump-autoload --optimize');
     }
 
     /**
@@ -96,12 +95,25 @@ class Init
             $this->client->dockerExec('cp ' . $vendordir . '/conf/wpunit.suite.yml tests/wpunit.suite.yml');
         }
 
+        // install necessary modules
+        passthru('composer require codeception/module-db --dev');
+        passthru('composer require codeception/module-phpbrowser --dev');
+        passthru('composer require codeception/module-cli --dev');
+        passthru('composer require codeception/module-asserts --dev');
+
+        if (!is_dir(Client::getAbsPath() . '/tests')) {
+            $this->client->dockerExec('mkdir -p tests');
+        }
+
         if (!is_dir(Client::getAbsPath() . '/tests/_support')) {
             $this->client->codecept('g:helper Unit');
             $this->client->codecept('g:helper Wpunit');
             $this->client->codecept('g:helper Acceptance');
             $this->client->codecept('g:helper Functional');
             $this->client->codecept('build');
+            if (!is_dir(Client::getAbsPath() . '/tests/_support/_generated')) {
+                $this->client->dockerExec('mkdir -p tests/_support/_generated');
+            }
             @file_put_contents(
                 Client::getAbsPath() . '/tests/_support/_generated/.gitignore',
                 $gitignore
@@ -124,5 +136,7 @@ class Init
         // generate sample tests
         $this->client->codecept('g:wpunit wpunit Sample');
         $this->client->codecept('g:test unit Sample');
+
+        passthru('composer dump-autoload --optimize');
     }
 }

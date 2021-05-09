@@ -23,6 +23,7 @@ class CreateConfig
         $config = [
             'namespace' => !empty($namespace) ? $namespace : Client::getWorkingDirname(),
             'projectType' => $project_type,
+            'wordpressVersion' => 'latest',
             'language' => 'en_US',
             'downloadPlugins' => [],
             'downloadThemes' => [],
