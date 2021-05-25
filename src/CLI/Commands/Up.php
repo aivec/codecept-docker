@@ -55,15 +55,6 @@ class Up implements Runner
     public function up(): void {
         $conf = $this->client->getConfig();
         $workingdir = Client::getAbsPath();
-        passthru("docker run -d --name {$conf->namespace}_selenoid \
-                --network {$conf->network} \
-                -p {$conf->selenoidPort}:{$conf->selenoidPort} \
-                -v /var/run/docker.sock:/var/run/docker.sock \
-                -v {$workingdir}/tests/_output/video/:/opt/selenoid/video/ \
-                -v {$workingdir}/tests/browsers.json:/etc/selenoid/browsers.json:ro \
-                -e OVERRIDE_VIDEO_OUTPUT_DIR={$workingdir}/tests/_output/video/ \
-                aerokube/selenoid:1.10.3 -container-network {$conf->network}");
-                exit;
         $volumes = [];
         $volume = '';
         @mkdir($workingdir . '/tests', 0755);
@@ -150,7 +141,7 @@ class Up implements Runner
         if ($conf->useSelenoid) {
             passthru("docker run -d --name {$conf->namespace}_selenoid \
                 --network {$conf->network} \
-                -p {$conf->selenoidPort}:{$conf->selenoidPort} \
+                --expose {$conf->selenoidPort} \
                 -v /var/run/docker.sock:/var/run/docker.sock \
                 -v {$workingdir}/tests/_output/video/:/opt/selenoid/video/ \
                 -v {$workingdir}/tests/browsers.json:/etc/selenoid/browsers.json:ro \
