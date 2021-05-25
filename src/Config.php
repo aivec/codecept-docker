@@ -23,6 +23,13 @@ class Config
     public const WPROOT = '/var/www/html';
 
     /**
+     * XDebug port for all environments
+     *
+     * @var int
+     */
+    public const XDEBUG_PORT = 4400;
+
+    /**
      * Directory for scripts used during container creation
      *
      * @var string
@@ -104,35 +111,46 @@ class Config
      *
      * @var string
      */
-    public $lang = 'en';
+    public $language = 'en';
 
     /**
-     * Port map for xdebug
+     * Whether to setup selenoid for Selenium testing
      *
-     * @var int[]
+     * @var bool
      */
-    public $xdebugPortMap = [
-        'acceptance' => 4300,
-        'integration' => 4400,
-    ];
+    public $useSelenoid = true;
 
     /**
-     * Grab configuration file contents
+     * Selenoid container port number
+     *
+     * @var int
+     */
+    public $selenoidPort = 4444;
+
+    /**
+     * Validates config and sets member variables
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @param array $conf
      */
-    public function __construct() {
-        $this->conf = json_decode(file_get_contents(CLI\Client::getAbsPath() . '/codecept-docker.json'), true);
+    public function __construct($conf) {
+        if (!empty($conf['ssh'])) {
+            $index = 0;
+            foreach ($conf['ssh'] as $ssh) {
+                $conf['ssh'][$index]['privateKeyFilename'] = basename($ssh['privateKeyPath']);
+                $index++;
+            }
+        }
 
-        (new ConfigValidator($this))->validateConfig();
-        $this->namespace = !empty($this->conf['namespace']) ? $this->conf['namespace'] : CLI\Client::getWorkingDirname();
-        $this->projectType = $this->conf['projectType'];
-        $this->lang = !empty($this->conf['language']) ? $this->conf['language'] : $this->lang;
-        $this->ftp = !empty($this->conf['ftp']) ? $this->conf['ftp'] : $this->ftp;
-        $this->ssh = !empty($this->conf['ssh']) ? $this->conf['ssh'] : $this->ssh;
-        $this->downloadPlugins = !empty($this->conf['downloadPlugins']) ? $this->conf['downloadPlugins'] : $this->downloadPlugins;
-        $this->downloadThemes = !empty($this->conf['downloadThemes']) ? $this->conf['downloadThemes'] : $this->downloadThemes;
-        $this->wordpressVersion = !empty($this->conf['wordpressVersion']) ? $this->conf['wordpressVersion'] : $this->wordpressVersion;
+        $this->namespace = !empty($conf['namespace']) ? $conf['namespace'] : CLI\Client::getWorkingDirname();
+        $this->projectType = $conf['projectType'];
+        $this->wordpressVersion = !empty($conf['wordpressVersion']) ? $conf['wordpressVersion'] : $this->wordpressVersion;
+        $this->useSelenoid = isset($conf['useSelenoid']) ? $conf['useSelenoid'] : $this->useSelenoid;
+        $this->language = isset($conf['language']) ? $conf['language'] : $this->language;
+        $this->ftp = !empty($conf['ftp']) ? $conf['ftp'] : $this->ftp;
+        $this->ssh = !empty($conf['ssh']) ? $conf['ssh'] : $this->ssh;
+        $this->downloadPlugins = !empty($conf['downloadPlugins']) ? $conf['downloadPlugins'] : $this->downloadPlugins;
+        $this->downloadThemes = !empty($conf['downloadThemes']) ? $conf['downloadThemes'] : $this->downloadThemes;
 
         $this->network = $this->namespace . '_wpcodecept-network';
         $types = ['acceptance', 'integration'];
@@ -141,7 +159,37 @@ class Config
             $this->dockermeta[$type]['containers']['wordpress'] = $this->namespace . '-' . $type . '-tests-wordpress';
             $this->dockermeta[$type]['volumes']['db'] = $this->namespace . '_wp_' . $type . '_db';
             $this->dockermeta[$type]['dbname'] = $type . '_tests';
-            $this->dockermeta[$type]['xdebugport'] = $this->xdebugPortMap[$type];
+            $this->dockermeta[$type]['xdebugport'] = self::XDEBUG_PORT;
         }
+
+        $this->conf['namespace'] = $this->namespace;
+        $this->conf['projectType'] = $this->projectType;
+        $this->conf['wordpressVersion'] = $this->wordpressVersion;
+        $this->conf['useSelenoid'] = $this->useSelenoid;
+        $this->conf['language'] = $this->language;
+        $this->conf['ftp'] = $this->ftp;
+        $this->conf['ssh'] = $this->ssh;
+        $this->conf['downloadPlugins'] = $this->downloadPlugins;
+        $this->conf['downloadThemes'] = $this->downloadThemes;
+    }
+
+    /**
+     * Returns config template
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @return array
+     */
+    public static function getConfigTemplate(): array {
+        return [
+            'namespace' => '',
+            'projectType' => '',
+            'wordpressVersion' => 'latest',
+            'useSelenoid' => true,
+            'language' => 'en_US',
+            'ftp' => [],
+            'ssh' => [],
+            'downloadPlugins' => [],
+            'downloadThemes' => [],
+        ];
     }
 }

@@ -119,7 +119,7 @@ class Client
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @return string
      */
-    public static function getWorkingDirname() {
+    public static function getWorkingDirname(): string {
         return basename(getcwd());
     }
 
@@ -129,7 +129,7 @@ class Client
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @return string
      */
-    public static function getAbsPath() {
+    public static function getAbsPath(): string {
         return getcwd();
     }
 }

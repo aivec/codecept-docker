@@ -3,6 +3,10 @@
 namespace Aivec\WordPress\CodeceptDocker\CLI\Commands;
 
 use Aivec\WordPress\CodeceptDocker\CLI\Client;
+use Aivec\WordPress\CodeceptDocker\Config;
+use Aivec\WordPress\CodeceptDocker\ConfigValidator;
+use Aivec\WordPress\CodeceptDocker\Errors\InvalidConfigException;
+use Aivec\WordPress\CodeceptDocker\Logger;
 
 /**
  * Stops Docker containers
@@ -10,19 +14,35 @@ use Aivec\WordPress\CodeceptDocker\CLI\Client;
 class Stop
 {
     /**
-     * Dependency injected client
+     * Client object
      *
      * @var Client
      */
-    private $client;
+    public $client;
 
     /**
-     * Injects client
+     * Initializes command
      *
-     * @param Client $client
+     * @param array $conf
      */
-    public function __construct(Client $client) {
-        $this->client = $client;
+    public function __construct(array $conf) {
+        $this->client = new Client(new Config($conf));
+    }
+
+    /**
+     * Runs the command
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @return void
+     */
+    public function run(): void {
+        try {
+            ConfigValidator::validateConfig($this->client->getConfig()->conf);
+            $this->stop();
+        } catch (InvalidConfigException $e) {
+            (new Logger())->configError($e);
+            exit(1);
+        }
     }
 
     /**
@@ -32,9 +52,13 @@ class Stop
      * @return void
      */
     public function stop(): void {
-        foreach ($this->client->getConfig()->dockermeta as $type => $info) {
+        $conf = $this->client->getConfig();
+        foreach ($conf->dockermeta as $type => $info) {
             passthru('docker stop ' . $info['containers']['wordpress']);
             passthru('docker stop ' . $info['containers']['db']);
+        }
+        if ($conf->useSelenoid) {
+            passthru('docker stop ' . $conf->namespace . '_selenoid');
         }
     }
 }

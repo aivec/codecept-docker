@@ -1,21 +1,15 @@
 # Codeception Test Suite Configuration
 #
-# Suite for acceptance tests.
-# Perform tests in browser using the WPWebDriver or WPBrowser.
-# Use WPDb to set up your initial database fixture.
-# If you need both WPWebDriver and WPBrowser tests - create a separate suite.
+# Suite for acceptance tests with selenoid.
+# Perform tests in browser using the WPWebDriver, powered by Selenium via selenoid.
 
 actor: AcceptanceTester
 modules:
     enabled:
         - WPDb
-        - WPBrowser
-        - WPCLI
+        - WPWebDriver
         - \Helper\Acceptance
     config:
-        WPCLI:
-            path: /var/www/html
-            allow-root: true
         WPDb:
             dsn: 'mysql:host=%TEST_SITE_DB_HOST%;dbname=%TEST_SITE_DB_NAME%'
             user: '%TEST_SITE_DB_USER%'
@@ -29,11 +23,14 @@ modules:
             url: '%TEST_SITE_WP_URL%'
             urlReplacement: true #replace the hardcoded dump URL with the one above
             tablePrefix: '%TEST_SITE_TABLE_PREFIX%'
-        WPBrowser:
+        WPWebDriver:
             url: '%TEST_SITE_WP_URL%'
             adminUsername: '%TEST_SITE_ADMIN_USERNAME%'
             adminPassword: '%TEST_SITE_ADMIN_PASSWORD%'
             adminPath: '%TEST_SITE_WP_ADMIN_PATH%'
-            headers:
-                X_TEST_REQUEST: 1
-                X_WPBROWSER_REQUEST: 1
+            browser: firefox
+            host: '%SELENOID_HOST%'
+            port: '%SELENOID_PORT%'
+            capabilities:
+                enableVNC: true
+                enableVideo: true

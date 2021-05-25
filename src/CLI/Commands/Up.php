@@ -3,27 +3,47 @@
 namespace Aivec\WordPress\CodeceptDocker\CLI\Commands;
 
 use Aivec\WordPress\CodeceptDocker\CLI\Client;
+use Aivec\WordPress\CodeceptDocker\CLI\Runner;
 use Aivec\WordPress\CodeceptDocker\Config;
+use Aivec\WordPress\CodeceptDocker\ConfigValidator;
+use Aivec\WordPress\CodeceptDocker\Errors\InvalidConfigException;
+use Aivec\WordPress\CodeceptDocker\Logger;
 
 /**
  * Command for creating and setting up Docker images/containers.
  */
-class Up
+class Up implements Runner
 {
     /**
-     * Dependency injected config model
+     * Client object
      *
      * @var Client
      */
     public $client;
 
     /**
-     * Initializes config member var
+     * Initializes command
      *
-     * @param Client $client
+     * @param array $conf
      */
-    public function __construct(Client $client) {
-        $this->client = $client;
+    public function __construct(array $conf) {
+        $this->client = new Client(new Config($conf));
+    }
+
+    /**
+     * Runs the command
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @return void
+     */
+    public function run(): void {
+        try {
+            ConfigValidator::validateConfig($this->client->getConfig()->conf);
+            $this->up();
+        } catch (InvalidConfigException $e) {
+            (new Logger())->configError($e);
+            exit(1);
+        }
     }
 
     /**
@@ -32,34 +52,45 @@ class Up
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @return void
      */
-    public function createEnvironments(): void {
+    public function up(): void {
+        $conf = $this->client->getConfig();
+        $workingdir = Client::getAbsPath();
+        passthru("docker run -d --name {$conf->namespace}_selenoid \
+                --network {$conf->network} \
+                -p {$conf->selenoidPort}:{$conf->selenoidPort} \
+                -v /var/run/docker.sock:/var/run/docker.sock \
+                -v {$workingdir}/tests/_output/video/:/opt/selenoid/video/ \
+                -v {$workingdir}/tests/browsers.json:/etc/selenoid/browsers.json:ro \
+                -e OVERRIDE_VIDEO_OUTPUT_DIR={$workingdir}/tests/_output/video/ \
+                aerokube/selenoid:1.10.3 -container-network {$conf->network}");
+                exit;
         $volumes = [];
         $volume = '';
-        @mkdir(Client::getAbsPath() . '/tests', 0755);
-        switch ($this->client->getConfig()->projectType) {
+        @mkdir($workingdir . '/tests', 0755);
+        switch ($conf->projectType) {
             case 'library':
-                $pluginfile = Client::getAbsPath() . '/tests/implementation-plugin/implementation-plugin.php';
+                $pluginfile = $workingdir . '/tests/implementation-plugin/implementation-plugin.php';
                 if (!file_exists($pluginfile)) {
-                    @mkdir(Client::getAbsPath() . '/tests/implementation-plugin', 0755);
+                    @mkdir($workingdir . '/tests/implementation-plugin', 0755);
                     @copy(
-                        Client::getAbsPath() . Config::VENDORDIR . '/implementation-plugin.php',
+                        $workingdir . Config::VENDORDIR . '/implementation-plugin.php',
                         $pluginfile
                     );
                 }
-                $volumes[] = '-v ' . Client::getAbsPath() . '/tests/implementation-plugin' . ':' . Config::WPROOT . '/wp-content/plugins/implementation-plugin';
-                $volumes[] = '-v ' . Client::getAbsPath() . ':' . Config::WPROOT . '/wp-content/plugins/' . Client::getWorkingDirname();
+                $volumes[] = '-v ' . $workingdir . '/tests/implementation-plugin' . ':' . Config::WPROOT . '/wp-content/plugins/implementation-plugin';
+                $volumes[] = '-v ' . $workingdir . ':' . Config::WPROOT . '/wp-content/plugins/' . Client::getWorkingDirname();
                 break;
             case 'plugin':
-                $volumes[] = '-v ' . Client::getAbsPath() . ':' . Config::WPROOT . '/wp-content/plugins/' . Client::getWorkingDirname();
+                $volumes[] = '-v ' . $workingdir . ':' . Config::WPROOT . '/wp-content/plugins/' . Client::getWorkingDirname();
                 break;
             case 'theme':
-                $volumes[] = '-v ' . Client::getAbsPath() . ':' . Config::WPROOT . '/wp-content/themes/' . Client::getWorkingDirname();
+                $volumes[] = '-v ' . $workingdir . ':' . Config::WPROOT . '/wp-content/themes/' . Client::getWorkingDirname();
                 break;
         }
 
-        $volumes[] = '-v ' . Client::getAbsPath() . Config::VENDORDIR . '/install_plugins_themes.sh:' . Config::EXTRASDIR . '/install_plugins_themes.sh';
-        if (!empty($this->client->getConfig()->ssh)) {
-            foreach ($this->client->getConfig()->ssh as $sshc) {
+        $volumes[] = '-v ' . $workingdir . Config::VENDORDIR . '/install_plugins_themes.sh:' . Config::EXTRASDIR . '/install_plugins_themes.sh';
+        if (!empty($conf->ssh)) {
+            foreach ($conf->ssh as $sshc) {
                 $sshvpath = Config::EXTRASDIR . '/ssh';
                 $volumes[] = '-v ' . realpath($sshc['privateKeyPath']) . ':' . $sshvpath . '/' . $sshc['privateKeyFilename'];
             }
@@ -68,19 +99,17 @@ class Up
         $volume = join(' ', $volumes);
 
         // build docker image
-        passthru('cd ' . Client::getAbsPath() . Config::VENDORDIR . ' && docker build --build-arg WP_VERSION=' . $this->client->getConfig()->wordpressVersion . ' . -t wpcodecept');
+        passthru('cd ' . $workingdir . Config::VENDORDIR . ' && docker build --build-arg WP_VERSION=' . $conf->wordpressVersion . ' . -t wpcodecept');
 
         // create CodeceptDocker network for wordpress-apache container and mysql container
-        passthru('docker network create --attachable ' . $this->client->getConfig()->network);
+        passthru('docker network create --attachable ' . $conf->network);
 
-        $res = [];
-        exec("docker network inspect bridge -f '{{ (index .IPAM.Config 0).Gateway }}'", $res);
-        $bridgeip = !empty($res[0]) ? $res[0] : '\'\'';
+        $bridgeip = 'host.docker.internal';
 
-        foreach ($this->client->getConfig()->dockermeta as $type => $info) {
+        foreach ($conf->dockermeta as $type => $info) {
             // create and run mysql container
             passthru('docker run -d --name ' . $info['containers']['db'] . ' \
-                --network ' . $this->client->getConfig()->network . ' \
+                --network ' . $conf->network . ' \
                 --env MYSQL_DATABASE=' . $info['dbname'] . ' \
                 --env MYSQL_USER=admin \
                 --env MYSQL_PASSWORD=admin \
@@ -93,9 +122,9 @@ class Up
                 'WORDPRESS_DB_PASSWORD' => 'root',
                 'WORDPRESS_DB_NAME' => $info['dbname'],
                 'XDEBUG_PORT' => $info['xdebugport'],
-                'FTP_CONFIGS' => '\'' . json_encode($this->client->getConfig()->ftp) . '\'',
-                'SSH_CONFIGS' => '\'' . json_encode($this->client->getConfig()->ssh) . '\'',
-                'LANG' => $this->client->getConfig()->lang,
+                'FTP_CONFIGS' => '\'' . json_encode($conf->ftp) . '\'',
+                'SSH_CONFIGS' => '\'' . json_encode($conf->ssh) . '\'',
+                'LANG' => $conf->language,
                 'DOCKER_BRIDGE_IP' => $bridgeip,
             ];
 
@@ -105,7 +134,8 @@ class Up
 
             // create and run WordPress containers
             passthru('docker run -d --name ' . $info['containers']['wordpress'] . ' \
-                --network ' . $this->client->getConfig()->network . ' \
+                --network ' . $conf->network . ' \
+                --add-host=host.docker.internal:host-gateway  \
                 ' . $envarsstrings . ' \
                 --env APACHE_ENV_VARS=' . json_encode(json_encode($envvars)) . ' \
                 ' . $volume . ' wpcodecept');
@@ -117,8 +147,19 @@ class Up
             passthru('docker exec -i ' . $info['containers']['wordpress'] . ' chown www-data:www-data wp-content/themes');
         }
 
+        if ($conf->useSelenoid) {
+            passthru("docker run -d --name {$conf->namespace}_selenoid \
+                --network {$conf->network} \
+                -p {$conf->selenoidPort}:{$conf->selenoidPort} \
+                -v /var/run/docker.sock:/var/run/docker.sock \
+                -v {$workingdir}/tests/_output/video/:/opt/selenoid/video/ \
+                -v {$workingdir}/tests/browsers.json:/etc/selenoid/browsers.json:ro \
+                -e OVERRIDE_VIDEO_OUTPUT_DIR={$workingdir}/tests/_output/video/ \
+                aerokube/selenoid:1.10.3 -container-network {$conf->network}");
+        }
+
         print("Waiting for MySQL containers to be ready...\n");
-        foreach ($this->client->getConfig()->dockermeta as $type => $info) {
+        foreach ($conf->dockermeta as $type => $info) {
             $sleep = [];
             $sleep[] = 'docker exec -i --user 1000:1000 ' . $info['containers']['wordpress'] . ' /bin/bash -c';
             $sleep[] = '\'maxretries=5;';
@@ -138,12 +179,12 @@ class Up
         // install WordPress core
         print("Installing WordPress...\n");
         $this->client->wpAcceptanceCLI('core install \
-            --url=' . $this->client->getConfig()->dockermeta['acceptance']['containers']['wordpress'] . ' \
+            --url=' . $conf->dockermeta['acceptance']['containers']['wordpress'] . ' \
             --title=Tests \
             --admin_user=root --admin_password=root \
             --admin_email=admin@example.com');
         $this->client->wpIntegrationCLI('core install \
-            --url=' . $this->client->getConfig()->dockermeta['integration']['containers']['wordpress'] . ' \
+            --url=' . $conf->dockermeta['integration']['containers']['wordpress'] . ' \
             --title=Tests \
             --admin_user=root --admin_password=root \
             --admin_email=admin@example.com');
@@ -161,10 +202,10 @@ class Up
      * @return void
      */
     public function installAndActivateLanguage(): void {
-        $this->client->wpAcceptanceCLI('language core install ' . $this->client->getConfig()->lang);
-        $this->client->wpAcceptanceCLI('site switch-language ' . $this->client->getConfig()->lang);
-        $this->client->wpIntegrationCLI('language core install ' . $this->client->getConfig()->lang);
-        $this->client->wpIntegrationCLI('site switch-language ' . $this->client->getConfig()->lang);
+        $this->client->wpAcceptanceCLI('language core install ' . $this->client->getConfig()->language);
+        $this->client->wpAcceptanceCLI('site switch-language ' . $this->client->getConfig()->language);
+        $this->client->wpIntegrationCLI('language core install ' . $this->client->getConfig()->language);
+        $this->client->wpIntegrationCLI('site switch-language ' . $this->client->getConfig()->language);
     }
 
     /**

@@ -19,15 +19,16 @@
     "vlucas/valitron": "^1.4",
     "lucatume/wp-browser": "^3.0"
   },
+  "require-dev": {
+    "aivec/phpcs-wp": "^2.0",
+    "phpunit/phpunit": "^9.5"
+  },
   "bin": [
     "bin/aivec-codecept"
   ],
   "scripts": {
     "lint": "phpcs -s --standard=Aivec-Core-7 src",
-    "lint:fix": "phpcbf --standard=Aivec-Core-7 src"
-  },
-  "require-dev": {
-    "aivec/phpcs-wp": "^2.0",
-    "phpunit/phpunit": "^9.5"
+    "lint:fix": "phpcbf --standard=Aivec-Core-7 src",
+    "test": "phpunit tests"
   }
 }

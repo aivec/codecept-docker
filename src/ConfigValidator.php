@@ -2,6 +2,7 @@
 
 namespace Aivec\WordPress\CodeceptDocker;
 
+use Aivec\WordPress\CodeceptDocker\Errors\InvalidConfigException;
 use Valitron\Validator;
 
 /**
@@ -10,82 +11,47 @@ use Valitron\Validator;
 class ConfigValidator
 {
     /**
-     * Config object
-     *
-     * @var Config
-     */
-    private $config;
-
-    /**
-     * Logger object
-     *
-     * @var Logger
-     */
-    public $logger;
-
-    /**
-     * Initializes validator
-     *
-     * @author Evan D Shaw <evandanielshaw@gmail.com>
-     * @param Config $config
-     * @return void
-     */
-    public function __construct(Config $config) {
-        $this->config = $config;
-        $this->logger = new Logger();
-    }
-
-    /**
      * Validates all config values
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @param array $conf
      * @return void
+     * @throws InvalidConfigException Thrown if `$conf` is invalid.
      */
-    public function validateConfig(): void {
-        $conf = $this->config->conf;
+    public static function validateConfig(array $conf): void {
         $v = new Validator($conf);
-        Validator::addRule(
-            'fileNotFound',
-            function ($field, $value, array $params, array $fields) {
-                if (empty($value)) {
-                    return false;
-                }
-                if (file_exists($value) === false) {
-                    return false;
-                }
-                return file_get_contents($value) !== false;
-            },
-            'refers to a file that either does not exist or cannot be read.'
-        );
         $v->rules([
             'required' => [
+                ['namespace'],
                 ['projectType'],
-                /* ['ssh.*.privateKeyPath'],
-                ['ssh.*.user'],
-                ['ssh.*.host'], */
             ],
             'optional' => [
                 ['wordpressVersion'],
+                ['language'],
+                ['useSelenoid'],
                 ['ssh'],
                 ['ftp'],
                 ['downloadPlugins'],
                 ['downloadThemes'],
+            ],
+            'ascii' => [
+                ['namespace'],
+                ['wordpressVersion'],
+                ['language'],
+            ],
+            'boolean' => [
+                ['useSelenoid'],
             ],
             'array' => [
                 ['ssh'],
                 ['ftp'],
                 ['downloadPlugins'],
                 ['downloadThemes'],
-                ['ssh.*.themes'],
-                ['ssh.*.plugins'],
             ],
             'containsUnique' => [
                 ['downloadPlugins'],
                 ['downloadThemes'],
-                ['ssh.*.themes'],
-                ['ssh.*.plugins'],
             ],
-            'fileNotFound' => 'ssh.*.privateKeyPath',
         ]);
         $v->rule(
             'in',
@@ -94,59 +60,78 @@ class ConfigValidator
         )->message('{field} must be one of "library", "plugin", or "theme"');
 
         if (!$v->validate()) {
-            $this->logger->error($this->logger->white('Error in ') . $this->logger->yellow('codecept-docker.json'));
-            print "\n";
-            foreach ($v->errors() as $key => $errors) {
-                foreach ($errors as $emessage) {
-                    $this->logger->valueError($key, $emessage);
-                }
-            }
-            exit(1);
+            $errors = is_array($v->errors()) ? $v->errors() : [];
+            throw new InvalidConfigException($errors);
         }
 
         if (!empty($conf['ssh'])) {
-            $index = 0;
+            Validator::addRule(
+                'fileNotFound',
+                function ($field, $value, array $params, array $fields) {
+                    if (empty($value)) {
+                        return false;
+                    }
+                    if (file_exists($value) === false) {
+                        return false;
+                    }
+                    return file_get_contents($value) !== false;
+                },
+                'refers to a file that either does not exist or cannot be read.'
+            );
             foreach ($conf['ssh'] as $ssh) {
-                $this->config->conf['ssh'][$index]['privateKeyFilename'] = basename($ssh['privateKeyPath']);
-                $index++;
+                $v = new Validator($ssh);
+                $v->rules([
+                    'optional' => [
+                        ['plugins'],
+                        ['themes'],
+                    ],
+                    'array' => [
+                        ['plugins'],
+                        ['themes'],
+                    ],
+                    'containsUnique' => [
+                        ['plugins'],
+                        ['themes'],
+                    ],
+                    'fileNotFound' => 'privateKeyPath',
+                ]);
+                $v->rule('requiredWith', 'privateKeyPath', ['plugins', 'themes']);
+                $v->rule('requiredWith', 'user', ['plugins', 'themes']);
+                $v->rule('requiredWith', 'host', ['plugins', 'themes']);
+
+                if (!$v->validate()) {
+                    $errors = is_array($v->errors()) ? $v->errors() : [];
+                    throw new InvalidConfigException($errors);
+                }
             }
         }
 
-        $this->configValidateNamespace();
-    }
+        if (!empty($conf['ftp'])) {
+            foreach ($conf['ftp'] as $ftp) {
+                $v = new Validator($ftp);
+                $v->rules([
+                    'optional' => [
+                        ['password'],
+                        ['plugins'],
+                        ['themes'],
+                    ],
+                    'array' => [
+                        ['plugins'],
+                        ['themes'],
+                    ],
+                    'containsUnique' => [
+                        ['plugins'],
+                        ['themes'],
+                    ],
+                ]);
+                $v->rule('requiredWith', 'user', ['plugins', 'themes']);
+                $v->rule('requiredWith', 'host', ['plugins', 'themes']);
 
-    /**
-     * Validates `namespace` field
-     *
-     * @author Evan D Shaw <evandanielshaw@gmail.com>
-     * @return void
-     */
-    public function configValidateNamespace(): void {
-        if (empty($this->config->conf['namespace'])) {
-            $this->logger->warn('codecept-docker.json does not contain a "namespace" field, defaulting to project directory name as a prefix for containers');
-        }
-    }
-
-    /**
-     * Validates value of `projectType` key in JSON config
-     *
-     * @author Evan D Shaw <evandanielshaw@gmail.com>
-     * @param string $project_type
-     * @return void
-     */
-    public static function validateProjectType($project_type) {
-        if (empty($project_type)) {
-            echo "\r\n";
-            echo 'FATAL: "projectType" is not defined. "projectType" must be one of "library", "plugin", or "theme"';
-            echo "\r\n";
-            exit(1);
-        }
-
-        if ($project_type !== 'library' && $project_type !== 'plugin' && $project_type !== 'theme') {
-            echo "\r\n";
-            echo 'FATAL: "projectType" must be one of "library", "plugin", or "theme"';
-            echo "\r\n";
-            exit(1);
+                if (!$v->validate()) {
+                    $errors = is_array($v->errors()) ? $v->errors() : [];
+                    throw new InvalidConfigException($errors);
+                }
+            }
         }
     }
 }

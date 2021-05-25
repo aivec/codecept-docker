@@ -2,6 +2,8 @@
 
 namespace Aivec\WordPress\CodeceptDocker;
 
+use Aivec\WordPress\CodeceptDocker\Errors\InvalidConfigException;
+
 /**
  * Console logger
  */
@@ -148,5 +150,22 @@ class Logger
      */
     public function yellow(string $message): string {
         return self::YELLOW . $message . self::NC;
+    }
+
+    /**
+     * Prints an error message given an `InvalidConfigException` instance
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @param InvalidConfigException $e
+     * @return void
+     */
+    public function configError(InvalidConfigException $e): void {
+        $this->error($this->white('Error in ') . $this->yellow('codecept-docker.json'));
+        print "\n";
+        foreach ($e->getErrors() as $key => $errors) {
+            foreach ($errors as $emessage) {
+                $this->valueError($key, $emessage);
+            }
+        }
     }
 }

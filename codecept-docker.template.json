@@ -2,6 +2,7 @@
   "namespace": "sample",
   "wordpressVersion": "latest",
   "projectType": "plugin",
+  "useSelenoid": true,
   "language": "en_US",
   "downloadPlugins": ["wp-multibyte-patch", "another-wp-official-plugin"],
   "downloadThemes": ["wp-official-theme", "another-wp-official-theme"],

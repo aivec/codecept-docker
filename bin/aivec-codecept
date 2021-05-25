@@ -9,14 +9,14 @@ use Aivec\WordPress\CodeceptDocker\CLI\Commands;
 
 require_once 'vendor/autoload.php';
 
-$logger = new Logger();
-
 // Define a cli with commands.
 $cli = Cli::create()
     ->command('create-config')
     ->description('Create codecept-docker.json config file in project directory.')
     ->opt('namespace:n', 'Prefix for Docker containers', false, 'string')
     ->opt('type:t', 'Project type. Must be one of "plugin", "theme", or "library"', true, 'string')
+    ->command('create-scaffolding')
+    ->description('Create Codeception scaffolding if it does not exist already (includes yml config files, test folders, etc.). ')
     ->command('init')
     ->description('Create Docker containers and Codeception scaffolding')
     ->command('up')
@@ -37,39 +37,44 @@ $cli = Cli::create()
 // Parse and return cli args.
 $args = $cli->parse($argv, true);
 
+$conf = null;
 if (!in_array($argv[1], ['create-config', 'update'], true)) {
     if (!file_exists(Client::getAbsPath() . '/codecept-docker.json')) {
-        $logger->error('codecept-docker.json does not exist in project directory. Create one with "aivec-codecept create-config --type=<type>"');
+        (new Logger())->error('codecept-docker.json does not exist in project directory. Create one with "aivec-codecept create-config --type=<type>"');
         exit(1);
     }
+    $conf = json_decode(file_get_contents(Client::getAbsPath() . '/codecept-docker.json'), true);
 }
 
 switch ($argv[1]) {
     case 'create-config':
-        Commands\CreateConfig::createConfig((string)$args->getOpt('type'), (string)$args->getOpt('namespace'));
+        (new Commands\CreateConfig($args))->run();
+        break;
+    case 'create-scaffolding':
+        (new Commands\CreateScaffolding($conf))->run();
         break;
     case 'init':
-        (new Commands\Init(new Commands\Up((new Client(new Config())))))->init();
+        (new Commands\Init($conf))->run();
         break;
     case 'up':
-        (new Commands\Up((new Client(new Config()))))->createEnvironments();
+        (new Commands\Up($conf))->run();
         break;
     case 'start':
-        (new Commands\Start((new Client(new Config()))))->start();
+        (new Commands\Start($conf))->run();
         break;
     case 'stop':
-        (new Commands\Stop((new Client(new Config()))))->stop();
+        (new Commands\Stop($conf))->run();
         break;
     case 'down':
-        (new Commands\Down((new Client(new Config()))))->down();
+        (new Commands\Down($conf))->run();
         break;
     case 'update':
-        Commands\Update::updateImages();
+        Commands\Update::update();
         break;
     case 'codecept':
-        (new Client(new Config()))->codecept(isset($argv[2]) ? join(' ', array_slice($argv, 2)) : '');
+        (new Client(new Config($conf)))->codecept(isset($argv[2]) ? join(' ', array_slice($argv, 2)) : '');
         break;
     case 'wp-cli':
-        (new Client(new Config()))->wpcli($argv);
+        (new Client(new Config($conf)))->wpcli($argv);
         break;
 }
