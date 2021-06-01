@@ -53,16 +53,13 @@ class Down
      */
     public function down(): void {
         $conf = $this->client->getConfig();
-        foreach ($conf->dockermeta as $type => $info) {
-            passthru('docker stop ' . $info['containers']['wordpress']);
-            passthru('docker stop ' . $info['containers']['db']);
-            passthru('docker rm ' . $info['containers']['wordpress']);
-            passthru('docker rm ' . $info['containers']['db']);
-        }
+        (new Stop($this->client->getConfig()->conf))->stop();
         if ($conf->useSelenoid) {
-            passthru('docker stop ' . $conf->namespace . '_selenoid');
-            passthru('docker rm ' . $conf->namespace . '_selenoid');
+            passthru("docker rm {$conf::$selenoidc}");
         }
-        passthru('docker network rm ' . $conf->network);
+        passthru("docker rm {$conf->container}");
+        passthru("docker rm {$conf::$mysqlc}");
+        passthru("docker rm {$conf::$phpmyadminc}");
+        passthru("docker network rm {$conf::$network}");
     }
 }

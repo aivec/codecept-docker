@@ -7,6 +7,14 @@ namespace Aivec\WordPress\CodeceptDocker;
  */
 class Config
 {
+    /**
+     * WordPress install root directory for Docker containers
+     *
+     * @var string
+     */
+    public const WPROOT = '/app';
+    public const THEMES_DIR = self::WPROOT . '/wp-content/themes';
+    public const PLUGINS_DIR = self::WPROOT . '/wp-content/plugins';
 
     /**
      * Path to codecept-docker vendor directory
@@ -15,26 +23,55 @@ class Config
      */
     public const VENDORDIR = '/vendor/aivec/codecept-docker';
 
+    public const AVC_META_DIR = '/avc-wpdocker-meta';
+    public const AVC_SCRIPTS_DIR = self::AVC_META_DIR . '/scripts';
+    public const AVC_DUMPFILES_DIR = self::AVC_META_DIR . '/dumpfiles';
+    public const AVC_SSH_DIR = self::AVC_META_DIR . '/ssh';
+    public const AVC_USER_SCRIPTS_DIR = self::AVC_META_DIR . '/user-scripts';
+    public const AVC_TEMP_DIR = self::AVC_META_DIR . '/temp';
+    public const AVC_CACHE_DIR = self::AVC_META_DIR . '/cache';
+
     /**
-     * WordPress install root directory for Docker containers
+     * Network for Docker containers
      *
      * @var string
      */
-    public const WPROOT = '/var/www/html';
+    public static $network = 'wpcodecept_network';
 
     /**
-     * XDebug port for all environments
+     * MySQL container name
+     *
+     * @var string
+     */
+    public static $mysqlc = 'wpcodecept_mysqldb';
+
+    /**
+     * MySQL volume name
+     *
+     * @var string
+     */
+    public static $mysqldbv = 'wpcodecept_dbv';
+
+    /**
+     * The phpMyAdmin container name
+     *
+     * @var string
+     */
+    public static $phpmyadminc = 'wpcodecept_phpmyadmin';
+
+    /**
+     * Selenoid container name
+     *
+     * @var string
+     */
+    public static $selenoidc = 'wpcodecept_selenoid';
+
+    /**
+     * Selenoid container port number
      *
      * @var int
      */
-    public const XDEBUG_PORT = 4400;
-
-    /**
-     * Directory for scripts used during container creation
-     *
-     * @var string
-     */
-    public const EXTRASDIR = self::WPROOT . '/extras';
+    public static $selenoidPort = 4444;
 
     /**
      * Associative array parsed from codecept-docker.json configuration file
@@ -44,7 +81,7 @@ class Config
     public $conf = null;
 
     /**
-     * Containers prefix
+     * WordPress container prefix
      *
      * @var string
      */
@@ -58,25 +95,46 @@ class Config
     public $wordpressVersion = 'latest';
 
     /**
-     * Project type. One of 'library', 'plugin', or 'theme'
+     * PHP version number. One of `7.2`, `7.3`, `7.4`, or `8.0`
+     *
+     * @var string
+     */
+    public $phpVersion = '7.4';
+
+    /**
+     * Project type. One of `plugin`, `theme`, or `other`
      *
      * @var string
      */
     public $projectType;
 
     /**
-     * Network for Docker containers
+     * WordPress container name
      *
      * @var string
      */
-    public $network;
+    public $container;
 
     /**
-     * Holds meta information related to containers
+     * Relative path to image TAR archive
      *
-     * @var array
+     * @var null|string
      */
-    public $dockermeta = [];
+    public $imagePath = null;
+
+    /**
+     * Name of the acceptance/functional tests DB
+     *
+     * @var string
+     */
+    public $acceptance_dbname;
+
+    /**
+     * Name of the integration tests DB
+     *
+     * @var string
+     */
+    public $integration_dbname;
 
     /**
      * SSH configs of plugins/themes to download
@@ -107,6 +165,13 @@ class Config
     public $downloadThemes = [];
 
     /**
+     * Key-value pairs of arbitrary PHP environment variables
+     *
+     * @var array
+     */
+    public $envvars = [];
+
+    /**
      * Default language to activate
      *
      * @var string
@@ -119,13 +184,6 @@ class Config
      * @var bool
      */
     public $useSelenoid = true;
-
-    /**
-     * Selenoid container port number
-     *
-     * @var int
-     */
-    public $selenoidPort = 4444;
 
     /**
      * Validates config and sets member variables
@@ -145,28 +203,27 @@ class Config
         $this->namespace = !empty($conf['namespace']) ? $conf['namespace'] : CLI\Client::getWorkingDirname();
         $this->projectType = $conf['projectType'];
         $this->wordpressVersion = !empty($conf['wordpressVersion']) ? $conf['wordpressVersion'] : $this->wordpressVersion;
+        $this->phpVersion = !empty($conf['phpVersion']) ? $conf['phpVersion'] : $this->phpVersion;
         $this->useSelenoid = isset($conf['useSelenoid']) ? $conf['useSelenoid'] : $this->useSelenoid;
         $this->language = isset($conf['language']) ? $conf['language'] : $this->language;
+        $this->imagePath = !empty($conf['imagePath']) ? $conf['imagePath'] : $this->imagePath;
+        $this->envvars = isset($conf['envvars']) && is_array($conf['envvars']) ? $conf['envvars'] : $this->envvars;
         $this->ftp = !empty($conf['ftp']) ? $conf['ftp'] : $this->ftp;
         $this->ssh = !empty($conf['ssh']) ? $conf['ssh'] : $this->ssh;
         $this->downloadPlugins = !empty($conf['downloadPlugins']) ? $conf['downloadPlugins'] : $this->downloadPlugins;
         $this->downloadThemes = !empty($conf['downloadThemes']) ? $conf['downloadThemes'] : $this->downloadThemes;
-
-        $this->network = $this->namespace . '_wpcodecept-network';
-        $types = ['acceptance', 'integration'];
-        foreach ($types as $type) {
-            $this->dockermeta[$type]['containers']['db'] = $this->namespace . '_wp_' . $type . '_tests_mysqldb';
-            $this->dockermeta[$type]['containers']['wordpress'] = $this->namespace . '-' . $type . '-tests-wordpress';
-            $this->dockermeta[$type]['volumes']['db'] = $this->namespace . '_wp_' . $type . '_db';
-            $this->dockermeta[$type]['dbname'] = $type . '_tests';
-            $this->dockermeta[$type]['xdebugport'] = self::XDEBUG_PORT;
-        }
+        $this->container = "{$this->namespace}-wpcodecept-wordpress";
+        $this->acceptance_dbname = "{$this->namespace}-acceptance";
+        $this->integration_dbname = "{$this->namespace}-integration";
 
         $this->conf['namespace'] = $this->namespace;
         $this->conf['projectType'] = $this->projectType;
         $this->conf['wordpressVersion'] = $this->wordpressVersion;
+        $this->conf['phpVersion'] = $this->phpVersion;
         $this->conf['useSelenoid'] = $this->useSelenoid;
         $this->conf['language'] = $this->language;
+        $this->conf['imagePath'] = $this->imagePath;
+        $this->conf['envvars'] = $this->envvars;
         $this->conf['ftp'] = $this->ftp;
         $this->conf['ssh'] = $this->ssh;
         $this->conf['downloadPlugins'] = $this->downloadPlugins;
@@ -184,8 +241,11 @@ class Config
             'namespace' => '',
             'projectType' => '',
             'wordpressVersion' => 'latest',
+            'phpVersion' => '7.4',
             'useSelenoid' => true,
             'language' => 'en_US',
+            'imagePath' => '',
+            'envvars' => [],
             'ftp' => [],
             'ssh' => [],
             'downloadPlugins' => [],

@@ -1,7 +1,12 @@
 # Codeception Test Suite Configuration
 #
-# Suite for acceptance tests with selenoid.
+# Suite for acceptance tests with Selenium.
 # Perform tests in browser using the WPWebDriver, powered by Selenium via selenoid.
+#
+# This suite maps localhost in the browser to TEST_SITE_WP_URL. This is useful
+# when testing a service that requires the sandbox environment to be run from localhost.
+#
+# If a localhost URL isn't required, use the selenium-bridge suite instead
 
 actor: AcceptanceTester
 modules:
@@ -20,17 +25,20 @@ modules:
             # re-import the dump between tests; this means the test site database will be repopulated between the tests.
             cleanup: true 
             waitlock: 10
-            url: '%TEST_SITE_WP_URL%'
+            url: http://localhost
             urlReplacement: true #replace the hardcoded dump URL with the one above
             tablePrefix: '%TEST_SITE_TABLE_PREFIX%'
         WPWebDriver:
-            url: '%TEST_SITE_WP_URL%'
+            url: http://localhost
             adminUsername: '%TEST_SITE_ADMIN_USERNAME%'
             adminPassword: '%TEST_SITE_ADMIN_PASSWORD%'
             adminPath: '%TEST_SITE_WP_ADMIN_PATH%'
-            browser: firefox
+            browser: chrome
             host: '%SELENOID_HOST%'
             port: '%SELENOID_PORT%'
             capabilities:
+                enableLog: true
                 enableVNC: true
                 enableVideo: true
+                chromeOptions:
+                    args: ["host-rules=MAP localhost %TEST_SITE_WP_URL_NO_SCHEME%"]

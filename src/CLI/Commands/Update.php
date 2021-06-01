@@ -20,13 +20,12 @@ class Update implements Runner
     }
 
     /**
-     * Updates wordpress:latest and wordpress:cli images
+     * Updates visiblevc/wordpress:latest image
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @return void
      */
     public static function update(): void {
-        passthru('docker image pull wordpress');
-        passthru('docker image pull wordpress:cli');
+        passthru('docker image pull visiblevc/wordpress');
     }
 }

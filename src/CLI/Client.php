@@ -43,10 +43,12 @@ class Client
      * @return void
      */
     public function dockerExec(string $command): void {
-        $path = $this->config->projectType === 'theme' ? Config::WPROOT . '/wp-content/themes/' : Config::WPROOT . '/wp-content/plugins/';
-        $path .= self::getWorkingDirname();
-        $dockerexec = 'docker exec -i --user 1000:1000 ' . $this->config->dockermeta['integration']['containers']['wordpress'] . ' /bin/bash -c \'cd ' . $path . '&& ';
-        passthru($dockerexec . $command . '\'');
+        $pluginsdir = Config::PLUGINS_DIR;
+        $themesdir = Config::THEMES_DIR;
+        $dirname = self::getWorkingDirname();
+        $cdto = Config::WPROOT;
+        $cdto = $this->config->projectType === 'theme' ? "{$themesdir}/{$dirname}" : "{$pluginsdir}/{$dirname}";
+        passthru("docker exec -i {$this->config->container} /bin/bash -c 'cd {$cdto} && {$command}'");
     }
 
     /**
@@ -61,15 +63,14 @@ class Client
         $firstc = isset($argv[2]) ? $argv[2] : '';
         $command = isset($argv[2]) ? join(' ', array_slice($argv, 2)) : '';
         if (empty($command)) {
-            $this->wpAcceptanceCLI('help');
+            $this->wpcommand('help');
             return;
         }
         if ($firstc === 'help') {
-            $this->wpAcceptanceCLI($command);
+            $this->wpcommand($command);
             return;
         }
-        $this->wpAcceptanceCLI($command);
-        $this->wpIntegrationCLI($command);
+        $this->wpcommand($command);
     }
 
     /**
@@ -79,27 +80,8 @@ class Client
      * @param string $command
      * @return void
      */
-    public function wpAcceptanceCLI(string $command): void {
-        passthru('docker run -i --rm \
-            --volumes-from ' . $this->config->dockermeta['acceptance']['containers']['wordpress'] . ' \
-            --network ' . $this->config->network . ' \
-            --user 33:33 -e HOME=/tmp \
-            wordpress:cli wp ' . $command);
-    }
-
-    /**
-     * Spins-up wp-cli container and executes command for integration install
-     *
-     * @author Evan D Shaw <evandanielshaw@gmail.com>
-     * @param string $command
-     * @return void
-     */
-    public function wpIntegrationCLI(string $command): void {
-        passthru('docker run -i --rm \
-            --volumes-from ' . $this->config->dockermeta['integration']['containers']['wordpress'] . ' \
-            --network ' . $this->config->network . ' \
-            --user 33:33 -e HOME=/tmp \
-            wordpress:cli wp ' . $command);
+    public function wpcommand(string $command): void {
+        $this->dockerExec("wp {$command}");
     }
 
     /**
@@ -110,7 +92,18 @@ class Client
      * @return void
      */
     public function codecept(string $command): void {
-        $this->dockerExec('./vendor/bin/codecept ' . $command);
+        $this->dockerExec("./vendor/bin/codecept {$command}");
+    }
+
+    /**
+     * Passes command as is to the codecept script from the host machine
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @param string $command
+     * @return void
+     */
+    public function codeceptFromHost(string $command): void {
+        passthru("./vendor/bin/codecept {$command}");
     }
 
     /**

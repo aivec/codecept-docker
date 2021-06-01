@@ -53,12 +53,11 @@ class Stop
      */
     public function stop(): void {
         $conf = $this->client->getConfig();
-        foreach ($conf->dockermeta as $type => $info) {
-            passthru('docker stop ' . $info['containers']['wordpress']);
-            passthru('docker stop ' . $info['containers']['db']);
-        }
         if ($conf->useSelenoid) {
-            passthru('docker stop ' . $conf->namespace . '_selenoid');
+            passthru("docker stop {$conf::$selenoidc}");
         }
+        passthru("docker stop {$conf->container}");
+        passthru("docker stop {$conf::$mysqlc}");
+        passthru("docker stop {$conf::$phpmyadminc}");
     }
 }

@@ -19,6 +19,19 @@ class ConfigValidator
      * @throws InvalidConfigException Thrown if `$conf` is invalid.
      */
     public static function validateConfig(array $conf): void {
+        Validator::addRule(
+            'fileNotFound',
+            function ($field, $value, array $params, array $fields) {
+                if (empty($value)) {
+                    return false;
+                }
+                if (file_exists($value) === false) {
+                    return false;
+                }
+                return file_get_contents($value) !== false;
+            },
+            'refers to a file that either does not exist or cannot be read.'
+        );
         $v = new Validator($conf);
         $v->rules([
             'required' => [
@@ -27,8 +40,10 @@ class ConfigValidator
             ],
             'optional' => [
                 ['wordpressVersion'],
+                ['phpVersion'],
                 ['language'],
                 ['useSelenoid'],
+                ['imagePath'],
                 ['ssh'],
                 ['ftp'],
                 ['downloadPlugins'],
@@ -52,12 +67,18 @@ class ConfigValidator
                 ['downloadPlugins'],
                 ['downloadThemes'],
             ],
+            'fileNotFound' => 'imagePath',
         ]);
         $v->rule(
             'in',
             'projectType',
-            ['library', 'plugin', 'theme']
-        )->message('{field} must be one of "library", "plugin", or "theme"');
+            ['other', 'plugin', 'theme']
+        )->message('{field} must be one of "plugin", "theme", or "other"');
+        $v->rule(
+            'in',
+            'phpVersion',
+            ['7.2', '7.3', '7.4', '8.0']
+        )->message('{field} must be one of "7.2", "7.3", "7.4", or "8.0"');
 
         if (!$v->validate()) {
             $errors = is_array($v->errors()) ? $v->errors() : [];
@@ -65,19 +86,6 @@ class ConfigValidator
         }
 
         if (!empty($conf['ssh'])) {
-            Validator::addRule(
-                'fileNotFound',
-                function ($field, $value, array $params, array $fields) {
-                    if (empty($value)) {
-                        return false;
-                    }
-                    if (file_exists($value) === false) {
-                        return false;
-                    }
-                    return file_get_contents($value) !== false;
-                },
-                'refers to a file that either does not exist or cannot be read.'
-            );
             foreach ($conf['ssh'] as $ssh) {
                 $v = new Validator($ssh);
                 $v->rules([

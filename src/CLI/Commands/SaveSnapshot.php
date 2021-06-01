@@ -3,15 +3,16 @@
 namespace Aivec\WordPress\CodeceptDocker\CLI\Commands;
 
 use Aivec\WordPress\CodeceptDocker\CLI\Client;
+use Aivec\WordPress\CodeceptDocker\CLI\Runner;
 use Aivec\WordPress\CodeceptDocker\Config;
 use Aivec\WordPress\CodeceptDocker\ConfigValidator;
 use Aivec\WordPress\CodeceptDocker\Errors\InvalidConfigException;
 use Aivec\WordPress\CodeceptDocker\Logger;
 
 /**
- * Starts Docker containers
+ * Save snapshot command
  */
-class Start
+class SaveSnapshot implements Runner
 {
     /**
      * Client object
@@ -38,7 +39,7 @@ class Start
     public function run(): void {
         try {
             ConfigValidator::validateConfig($this->client->getConfig()->conf);
-            $this->start();
+            $this->saveSnapshot();
         } catch (InvalidConfigException $e) {
             (new Logger())->configError($e);
             exit(1);
@@ -46,18 +47,20 @@ class Start
     }
 
     /**
-     * Starts stopped Codeception Docker containers
+     * Saves the container as an image and exports it as a TAR archive to `tests/_data`
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @return void
      */
-    public function start(): void {
+    public function saveSnapshot() {
+        $scriptsdir = Config::AVC_SCRIPTS_DIR;
         $conf = $this->client->getConfig();
-        if ($conf->useSelenoid) {
-            passthru("docker start {$conf::$selenoidc}");
+        $workingdir = Client::getAbsPath();
+        if (!is_dir("{$workingdir}/tests/_data")) {
+            mkdir('tests/_data', 0755, true);
         }
-        passthru("docker start {$conf->container}");
-        passthru("docker start {$conf::$mysqlc}");
-        passthru("docker start {$conf::$phpmyadminc}");
+        $image = "{$conf->container}-{$conf->phpVersion}";
+        passthru("docker commit --change='CMD [\"{$scriptsdir}/run.sh\"]' {$conf->container} {$image}:latest");
+        passthru("docker image save -o tests/_data/{$image}.tar {$image}");
     }
 }

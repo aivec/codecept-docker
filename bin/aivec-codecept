@@ -14,7 +14,7 @@ $cli = Cli::create()
     ->command('create-config')
     ->description('Create codecept-docker.json config file in project directory.')
     ->opt('namespace:n', 'Prefix for Docker containers', false, 'string')
-    ->opt('type:t', 'Project type. Must be one of "plugin", "theme", or "library"', true, 'string')
+    ->opt('type:t', 'Project type. Must be one of "plugin", "theme", or "other"', true, 'string')
     ->command('create-scaffolding')
     ->description('Create Codeception scaffolding if it does not exist already (includes yml config files, test folders, etc.). ')
     ->command('init')
@@ -27,12 +27,14 @@ $cli = Cli::create()
     ->description('Stop running containers')
     ->command('down')
     ->description('Stops and removes containers. NOTE: you will have to call "up" again if you do this')
-    ->command('update')
-    ->description('Updates wordpress and wp-cli Docker images to latest')
+    ->command('save-snapshot')
+    ->description('Saves the WordPress container as an image and exports it as a TAR archive to `tests/_data`')
     ->command('codecept')
     ->description('Calls and passes args to codecept script from within Docker container')
     ->command('wp-cli')
-    ->description('Runs and passes command/arguments to wp-cli container for Docker installs');
+    ->description('Runs and passes command/arguments to wp-cli for the WordPress container')
+    ->command('update')
+    ->description('Updates wordpress and wp-cli Docker images to latest');
 
 // Parse and return cli args.
 $args = $cli->parse($argv, true);
@@ -68,13 +70,16 @@ switch ($argv[1]) {
     case 'down':
         (new Commands\Down($conf))->run();
         break;
-    case 'update':
-        Commands\Update::update();
+    case 'save-snapshot':
+        (new Commands\SaveSnapshot($conf))->run();
         break;
     case 'codecept':
         (new Client(new Config($conf)))->codecept(isset($argv[2]) ? join(' ', array_slice($argv, 2)) : '');
         break;
     case 'wp-cli':
         (new Client(new Config($conf)))->wpcli($argv);
+        break;
+    case 'update':
+        Commands\Update::update();
         break;
 }
