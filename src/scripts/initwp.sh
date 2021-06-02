@@ -3,7 +3,7 @@
 sudo chown admin:admin ${AVC_META_DIR}
 sudo chown -R admin:admin ${AVC_SCRIPTS_DIR}
 
-${AVC_SCRIPTS_DIR}/integration_db.sh
+${AVC_SCRIPTS_DIR}/db.sh
 ${AVC_SCRIPTS_DIR}/xdebug.sh
 ${AVC_SCRIPTS_DIR}/apache_envvars.sh
 ${AVC_SCRIPTS_DIR}/download_pts.sh

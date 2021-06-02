@@ -136,7 +136,7 @@ class Up implements Runner
         $envvars['AVC_CACHE_DIR'] = Config::AVC_CACHE_DIR;
         $envvars['ACCEPTANCE_DB_NAME'] = $conf->acceptance_dbname;
         $envvars['INTEGRATION_DB_NAME'] = $conf->integration_dbname;
-        $envvars['RUNNING_FROM_CACHE'] = 0; // add later
+        $envvars['RUNNING_FROM_CACHE'] = (int)!empty($conf->imagePath);
         $envvars['DOCKER_BRIDGE_IP'] = 'host.docker.internal';
         $envvars['FTP_CONFIGS'] = trim(json_encode(json_encode($conf->ftp, JSON_UNESCAPED_SLASHES), JSON_UNESCAPED_SLASHES));
         $envvars['SSH_CONFIGS'] = trim(json_encode(json_encode($conf->ssh, JSON_UNESCAPED_SLASHES), JSON_UNESCAPED_SLASHES));
