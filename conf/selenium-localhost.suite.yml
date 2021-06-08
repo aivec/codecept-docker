@@ -8,12 +8,13 @@
 #
 # If a localhost URL isn't required, use the selenium-bridge suite instead
 
-actor: AcceptanceTester
+actor: SeleniumTester
 modules:
     enabled:
         - WPDb
         - WPWebDriver
-        - \Helper\Acceptance
+        - Asserts
+        - \Helper\Selenium
     config:
         WPDb:
             dsn: 'mysql:host=%TEST_SITE_DB_HOST%;dbname=%TEST_SITE_DB_NAME%'

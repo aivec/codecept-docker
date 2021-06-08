@@ -5,6 +5,9 @@
   "projectType": "plugin",
   "useSelenoid": true,
   "language": "en_US",
+  "envvars": {
+    "key": "value"
+  },
   "imagePath": "path/to/my/image.tar",
   "downloadPlugins": ["wp-multibyte-patch", "another-wp-official-plugin"],
   "downloadThemes": ["wp-official-theme", "another-wp-official-theme"],

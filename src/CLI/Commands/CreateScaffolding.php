@@ -156,12 +156,16 @@ class CreateScaffolding implements Runner
                 copy("{$vendordir}/conf/selenium-localhost.suite.yml", 'tests/selenium-localhost.suite.yml');
             }
             if (!file_exists("{$workingdir}/tests/browsers.json")) {
-                copy("cp {$vendordir}/conf/browsers.json", 'tests/browsers.json');
+                copy("{$vendordir}/conf/browsers.json", 'tests/browsers.json');
             }
 
             exec('composer show codeception/module-webdriver 2>/dev/null', $out, $code);
             if ($code === 1) {
                 passthru('composer require codeception/module-webdriver --dev');
+            }
+
+            if (!file_exists("{$workingdir}/tests/_support/Helper/Selenium.php")) {
+                $this->client->codeceptFromHost('g:helper Selenium');
             }
         }
 
