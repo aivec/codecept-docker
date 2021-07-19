@@ -90,6 +90,8 @@ class Up implements Runner
 
         // mounting a script here tells the visiblevc run.sh script to run it before starting apache
         $volumes[] = "-v {$vendordir}/src/scripts/initwp.sh:/docker-entrypoint-initwp.d/initwp.sh";
+        // mount custom scripts
+        $volumes[] = "-v {$vendordir}/src/scripts:/avc-wpdocker-meta/scripts";
         $volume = join(' ', $volumes);
 
         // build WordPress docker image
