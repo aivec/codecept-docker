@@ -136,6 +136,7 @@ class Up implements Runner
         $envvars['AVC_USER_SCRIPTS_DIR'] = Config::AVC_USER_SCRIPTS_DIR;
         $envvars['AVC_TEMP_DIR'] = Config::AVC_TEMP_DIR;
         $envvars['AVC_CACHE_DIR'] = Config::AVC_CACHE_DIR;
+        $envvars['VIDEO_OUTPUT_DIR'] = "{$workingdir}/tests/_output/video";
         $envvars['ACCEPTANCE_DB_NAME'] = $conf->acceptance_dbname;
         $envvars['INTEGRATION_DB_NAME'] = $conf->integration_dbname;
         $envvars['RUNNING_FROM_CACHE'] = (int)!empty($conf->imagePath);
@@ -190,6 +191,7 @@ class Up implements Runner
             --add-host=host.docker.internal:host-gateway  \
             --network {$conf::$network} \
             {$envarsstrings} \
+            -v /var/run/docker.sock:/var/run/docker.sock \
             {$volume} \
             {$wpimage}");
 
@@ -203,7 +205,8 @@ class Up implements Runner
                 -v {$workingdir}/tests/browsers.json:/etc/selenoid/browsers.json:ro \
                 -e OVERRIDE_VIDEO_OUTPUT_DIR={$workingdir}/tests/_output/video/ \
                 aerokube/selenoid:1.10.3 -container-network {$conf::$network} \
-                -log-output-dir /opt/selenoid/logs");
+                -log-output-dir /opt/selenoid/logs \
+                -video-recorder-image aivec/video-recorder");
         }
 
         passthru("docker logs -f {$conf->container}");

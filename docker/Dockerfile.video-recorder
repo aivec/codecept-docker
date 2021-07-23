@@ -1,0 +1,8 @@
+FROM selenoid/video-recorder:latest
+
+RUN rm /entrypoint.sh
+
+COPY entrypoint.sh /
+COPY record.sh /
+
+ENTRYPOINT ["/entrypoint.sh"]
