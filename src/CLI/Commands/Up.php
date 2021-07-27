@@ -60,6 +60,7 @@ class Up implements Runner
         $wproot = Config::WPROOT;
         $volumes = [];
         $volume = '';
+        $srcdir = '';
         @mkdir("{$workingdir}/tests", 0755);
         switch ($conf->projectType) {
             case 'other':
@@ -68,14 +69,17 @@ class Up implements Runner
                     mkdir("{$workingdir}/tests/implementation-plugin", 0755);
                     copy("{$vendordir}/implementation-plugin.php", $pluginfile);
                 }
+                $srcdir = "{$wproot}/wp-content/plugins/{$workingdirname}";
                 $volumes[] = "-v {$workingdir}/tests/implementation-plugin:{$wproot}/wp-content/plugins/implementation-plugin";
-                $volumes[] = "-v {$workingdir}:{$wproot}/wp-content/plugins/{$workingdirname}";
+                $volumes[] = "-v {$workingdir}:{$srcdir}";
                 break;
             case 'plugin':
-                $volumes[] = "-v {$workingdir}:{$wproot}/wp-content/plugins/{$workingdirname}";
+                $srcdir = "{$wproot}/wp-content/plugins/{$workingdirname}";
+                $volumes[] = "-v {$workingdir}:{$srcdir}";
                 break;
             case 'theme':
-                $volumes[] = "-v {$workingdir}:{$wproot}/wp-content/themes/{$workingdirname}";
+                $srcdir = "{$wproot}/wp-content/themes/{$workingdirname}";
+                $volumes[] = "-v {$workingdir}:{$srcdir}";
                 break;
         }
 
@@ -104,6 +108,9 @@ class Up implements Runner
         } else {
             passthru("docker build -t {$wpimage} -f {$vendordir}/docker/Dockerfile.php{$conf->phpVersion} {$vendordir}");
         }
+
+        // build custom aivec/selenoid-video-recorder image
+        passthru("docker build -t aivec/selenoid-video-recorder -f {$vendordir}/docker/video-recorder/Dockerfile.video-recorder {$vendordir}/docker/video-recorder");
 
         // create CodeceptDocker network for WordPress and MySQL container
         passthru("docker network create --attachable {$conf::$network}");
@@ -136,6 +143,7 @@ class Up implements Runner
         $envvars['AVC_USER_SCRIPTS_DIR'] = Config::AVC_USER_SCRIPTS_DIR;
         $envvars['AVC_TEMP_DIR'] = Config::AVC_TEMP_DIR;
         $envvars['AVC_CACHE_DIR'] = Config::AVC_CACHE_DIR;
+        $envvars['AVC_SRC_DIR'] = $srcdir;
         $envvars['VIDEO_OUTPUT_DIR'] = "{$workingdir}/tests/_output/video";
         $envvars['ACCEPTANCE_DB_NAME'] = $conf->acceptance_dbname;
         $envvars['INTEGRATION_DB_NAME'] = $conf->integration_dbname;
@@ -206,7 +214,7 @@ class Up implements Runner
                 -e OVERRIDE_VIDEO_OUTPUT_DIR={$workingdir}/tests/_output/video/ \
                 aerokube/selenoid:1.10.3 -container-network {$conf::$network} \
                 -log-output-dir /opt/selenoid/logs \
-                -video-recorder-image aivec/video-recorder");
+                -video-recorder-image aivec/selenoid-video-recorder");
         }
 
         passthru("docker logs -f {$conf->container}");

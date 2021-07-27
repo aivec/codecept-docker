@@ -15,6 +15,7 @@ modules:
         - WPDb
         - WPWebDriver
         - Asserts
+        - SelenoidVideoRecorder
         - \Helper\Selenium
     config:
         WPDb:
