@@ -184,6 +184,9 @@ class SelenoidVideoRecorder extends Module
     /**
      * Starts recording video for the current test
      *
+     * If a video from a previous run of a test exists it will be deleted, regardless of the
+     * pass status. This is to make sure that videos are always reflective of their latest run.
+     *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @param TestInterface $test
      * @return void
@@ -192,6 +195,11 @@ class SelenoidVideoRecorder extends Module
         $this->setup();
 
         $this->videoFileName = $test->getMetadata()->getName();
+
+        // delete existing video
+        $vidsdir = "{$_ENV['AVC_SRC_DIR']}/tests/_output/video";
+        exec("rm -f {$vidsdir}/{$this->videoFileName}.*");
+
         $execId = $this->dockerExecRegisterCommand([
             'Cmd' => [
                 '/record.sh',
@@ -215,13 +223,25 @@ class SelenoidVideoRecorder extends Module
     }
 
     /**
-     * Sets the test status for the current test to `success` if it didn't fail
+     * Stops video recording and sets the test status for the current test to `success` if it didn't fail
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @param TestInterface $test
      * @return void
      */
     public function _after(TestInterface $test) {
+        // pause for one moment so the last page can be seen
+        sleep(1);
+        $wd = null;
+        $modules = $this->getModules();
+        if ($modules['WPWebDriver']) {
+            $wd = $modules['WPWebDriver'];
+        } else {
+            $wd = $modules['WebDriver'];
+        }
+        // set URL to blank page so that videos don't overlap between tests
+        $wd->executeJS("window.location.href = 'about:blank';");
+
         $this->stopVideo();
         if (!isset($this->testPassStatusMap[$this->videoFileName])) {
             $this->testPassStatusMap[$this->videoFileName] = 'success';
@@ -254,7 +274,7 @@ class SelenoidVideoRecorder extends Module
         foreach ($this->testPassStatusMap as $videoFileName => $status) {
             $file = "{$vidsdir}/{$videoFileName}.{$this->videoFileExt}";
             $newfile = "{$vidsdir}/{$videoFileName}.{$status}.{$this->videoFileExt}";
-            exec("cp {$file} {$newfile}");
+            exec("mv {$file} {$newfile}");
         }
     }
 }
