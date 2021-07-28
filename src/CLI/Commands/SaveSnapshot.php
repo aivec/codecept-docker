@@ -41,7 +41,7 @@ class SaveSnapshot implements Runner
             ConfigValidator::validateConfig($this->client->getConfig()->conf);
             $this->saveSnapshot();
         } catch (InvalidConfigException $e) {
-            (new Logger())->configError($e);
+            Logger::configError($e);
             exit(1);
         }
     }
@@ -60,7 +60,31 @@ class SaveSnapshot implements Runner
             mkdir('tests/_data', 0755, true);
         }
         $image = "{$conf->container}-{$conf->phpVersion}";
-        passthru("docker commit --change='CMD [\"{$scriptsdir}/run.sh\"]' {$conf->container} {$image}:latest");
-        passthru("docker image save -o tests/_data/{$image}.tar {$image}");
+        Logger::info('Saving snapshot to ' . Logger::yellow("{$workingdir}/tests/_data/{$image}.tar"));
+        Logger::info('This might take a while...');
+        $output = null;
+        $rcode = null;
+        exec("docker commit --change='CMD [\"{$scriptsdir}/run.sh\"]' {$conf->container} {$image}:latest", $output, $rcode);
+        if ($rcode > 0) {
+            Logger::error('Failed creating snapshot');
+            exit(1);
+        }
+        if (isset($output[0])) {
+            echo $output[0] . "\n";
+        }
+
+        $output = null;
+        $rcode = null;
+        exec("docker image save -o tests/_data/{$image}.tar {$image}", $output, $rcode);
+        if ($rcode > 0) {
+            Logger::error('Failed creating snapshot');
+            exit(1);
+        }
+        if (isset($output[0])) {
+            echo $output[0] . "\n";
+        }
+
+        Logger::info('Success');
+        Logger::info('In ' . Logger::green('codecept-docker.json') . ', set ' . Logger::green('image') . ' to ' . Logger::yellow("tests/_data/{$image}.tar"));
     }
 }

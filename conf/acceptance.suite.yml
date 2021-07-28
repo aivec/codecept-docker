@@ -11,7 +11,6 @@ modules:
         - WPDb
         - WPBrowser
         - Asserts
-        - \Helper\Acceptance
     config:
         WPDb:
             dsn: 'mysql:host=%TEST_SITE_DB_HOST%;dbname=%TEST_SITE_DB_NAME%'

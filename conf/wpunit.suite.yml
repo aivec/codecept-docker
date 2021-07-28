@@ -7,7 +7,6 @@ modules:
     enabled:
         - WPLoader
         - Asserts
-        - \Helper\Wpunit
     config:
         WPLoader:
             wpRootFolder: "%WP_ROOT_FOLDER%"

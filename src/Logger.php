@@ -24,7 +24,7 @@ class Logger
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @return array
      */
-    public function getHeaders(): array {
+    public static function getHeaders(): array {
         return [
             'info' => self::CYAN . '[INFO]' . self::NC,
             'warn' => self::YELLOW . '[WARNING]' . self::NC,
@@ -40,15 +40,15 @@ class Logger
      * @param mixed  $message
      * @return void
      */
-    public function log(string $level, $message): void {
+    public static function log(string $level, $message): void {
         if (!is_string($message)) {
             $message = json_encode($message);
         }
 
         if (in_array($level, self::LEVELS, true)) {
-            print "\n" . $this->getHeaders()[$level] . ' ' . $message . "\n";
+            print self::getHeaders()[$level] . ' ' . $message . "\n";
         } else {
-            print "\n" . '[' . $level . '] ' . $message . "\n";
+            print '[' . $level . '] ' . $message . "\n";
         }
     }
 
@@ -59,8 +59,8 @@ class Logger
      * @param string $message
      * @return void
      */
-    public function info(string $message): void {
-        $this->log('info', $message);
+    public static function info(string $message): void {
+        self::log('info', $message);
     }
 
     /**
@@ -70,8 +70,8 @@ class Logger
      * @param string $message
      * @return void
      */
-    public function warn(string $message): void {
-        $this->log('warn', $message);
+    public static function warn(string $message): void {
+        self::log('warn', $message);
     }
 
     /**
@@ -81,8 +81,8 @@ class Logger
      * @param string $message
      * @return void
      */
-    public function error(string $message): void {
-        $this->log('error', $message);
+    public static function error(string $message): void {
+        self::log('error', $message);
     }
 
     /**
@@ -93,8 +93,8 @@ class Logger
      * @param string $message
      * @return void
      */
-    public function valueError(string $key, string $message): void {
-        print '[key: ' . $this->yellow('"' . $key . '"') . ']: ' . $message . "\n";
+    public static function valueError(string $key, string $message): void {
+        print '[key: ' . self::yellow('"' . $key . '"') . ']: ' . $message . "\n";
     }
 
     /**
@@ -104,7 +104,7 @@ class Logger
      * @param string $message
      * @return string
      */
-    public function red(string $message): string {
+    public static function red(string $message): string {
         return self::RED . $message . self::NC;
     }
 
@@ -115,7 +115,7 @@ class Logger
      * @param string $message
      * @return string
      */
-    public function green(string $message): string {
+    public static function green(string $message): string {
         return self::GREEN . $message . self::NC;
     }
 
@@ -126,7 +126,7 @@ class Logger
      * @param string $message
      * @return string
      */
-    public function cyan(string $message): string {
+    public static function cyan(string $message): string {
         return self::CYAN . $message . self::NC;
     }
 
@@ -137,7 +137,7 @@ class Logger
      * @param string $message
      * @return string
      */
-    public function white(string $message): string {
+    public static function white(string $message): string {
         return self::WHITE . $message . self::NC;
     }
 
@@ -148,7 +148,7 @@ class Logger
      * @param string $message
      * @return string
      */
-    public function yellow(string $message): string {
+    public static function yellow(string $message): string {
         return self::YELLOW . $message . self::NC;
     }
 
@@ -159,12 +159,12 @@ class Logger
      * @param InvalidConfigException $e
      * @return void
      */
-    public function configError(InvalidConfigException $e): void {
-        $this->error($this->white('Error in ') . $this->yellow('codecept-docker.json'));
+    public static function configError(InvalidConfigException $e): void {
+        self::error(self::white('Error in ') . self::yellow('codecept-docker.json'));
         print "\n";
         foreach ($e->getErrors() as $key => $errors) {
             foreach ($errors as $emessage) {
-                $this->valueError($key, $emessage);
+                self::valueError($key, $emessage);
             }
         }
     }

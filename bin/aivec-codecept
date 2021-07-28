@@ -12,29 +12,28 @@ require_once 'vendor/autoload.php';
 // Define a cli with commands.
 $cli = Cli::create()
     ->command('create-config')
-    ->description('Create codecept-docker.json config file in project directory.')
-    ->opt('namespace:n', 'Prefix for Docker containers', false, 'string')
-    ->opt('type:t', 'Project type. Must be one of "plugin", "theme", or "other"', true, 'string')
-    ->command('create-scaffolding')
-    ->description('Create Codeception scaffolding if it does not exist already (includes yml config files, test folders, etc.). ')
-    ->command('init')
-    ->description('Create Docker containers and Codeception scaffolding')
+        ->description('Creates codecept-docker.json config file in project directory')
+        ->opt('namespace:n', 'Prefix for Docker containers', false, 'string')
+        ->opt('type:t', 'Project type. Must be one of "plugin", "theme", or "other"', true, 'string')
+    ->command('bootstrap')
+        ->description(
+            "Create Codeception scaffolding if it does not exist already (includes yml config files, test folders, etc.). 
+            This command is idempotent and will not overwrite files/folders. It can safely be invoked any number of times"
+        )
+        ->opt('with-helpers:wh', 'If provided, Helper classes will be generated for each suite', false, 'boolean')
+        ->opt('with-sample-tests:wst', 'If provided, sample tests will be generated for each suite', false, 'boolean')
     ->command('up')
-    ->description('Create Docker containers. If you also want Codeception scaffolding, use "init" instead.')
-    ->command('start')
-    ->description('Start stopped containers')
-    ->command('stop')
-    ->description('Stop running containers')
+        ->description('Creates and/or starts Docker containers.')
     ->command('down')
-    ->description('Stops and removes containers. NOTE: you will have to call "up" again if you do this')
+        ->description('Stops and removes containers')
     ->command('save-snapshot')
-    ->description('Saves the WordPress container as an image and exports it as a TAR archive to `tests/_data`')
+        ->description('Saves the WordPress container as an image and exports it as a TAR archive to `tests/_data`')
     ->command('codecept')
-    ->description('Calls and passes args to codecept script from within Docker container')
+        ->description('Calls and passes args to codecept script from within the WordPress Docker container')
     ->command('wp-cli')
-    ->description('Runs and passes command/arguments to wp-cli for the WordPress container')
+        ->description('Runs and passes command/arguments to wp-cli from within the WordPress Docker container')
     ->command('update')
-    ->description('Updates wordpress and wp-cli Docker images to latest');
+        ->description('Updates WordPress Docker image to latest');
 
 // Parse and return cli args.
 $args = $cli->parse($argv, true);
@@ -42,7 +41,7 @@ $args = $cli->parse($argv, true);
 $conf = null;
 if (!in_array($argv[1], ['create-config', 'update'], true)) {
     if (!file_exists(Client::getAbsPath() . '/codecept-docker.json')) {
-        (new Logger())->error('codecept-docker.json does not exist in project directory. Create one with "aivec-codecept create-config --type=<type>"');
+        Logger::error('codecept-docker.json does not exist in project directory. Create one with "aivec-codecept create-config --type=<type>"');
         exit(1);
     }
     $conf = json_decode(file_get_contents(Client::getAbsPath() . '/codecept-docker.json'), true);
@@ -52,8 +51,8 @@ switch ($argv[1]) {
     case 'create-config':
         (new Commands\CreateConfig($args))->run();
         break;
-    case 'create-scaffolding':
-        (new Commands\CreateScaffolding($conf))->run();
+    case 'bootstrap':
+        (new Commands\Bootstrap($conf, $args))->run();
         break;
     case 'init':
         (new Commands\Init($conf))->run();

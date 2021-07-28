@@ -40,7 +40,7 @@ class Start
             ConfigValidator::validateConfig($this->client->getConfig()->conf);
             $this->start();
         } catch (InvalidConfigException $e) {
-            (new Logger())->configError($e);
+            Logger::configError($e);
             exit(1);
         }
     }

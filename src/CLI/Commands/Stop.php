@@ -40,7 +40,7 @@ class Stop
             ConfigValidator::validateConfig($this->client->getConfig()->conf);
             $this->stop();
         } catch (InvalidConfigException $e) {
-            (new Logger())->configError($e);
+            Logger::configError($e);
             exit(1);
         }
     }

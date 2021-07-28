@@ -208,7 +208,6 @@ class Config
         $this->language = isset($conf['language']) ? $conf['language'] : $this->language;
         $this->imagePath = !empty($conf['imagePath']) ? $conf['imagePath'] : $this->imagePath;
         $this->envvars = isset($conf['envvars']) && is_array($conf['envvars']) ? $conf['envvars'] : $this->envvars;
-        $this->ftp = !empty($conf['ftp']) ? $conf['ftp'] : $this->ftp;
         $this->ssh = !empty($conf['ssh']) ? $conf['ssh'] : $this->ssh;
         $this->downloadPlugins = !empty($conf['downloadPlugins']) ? $conf['downloadPlugins'] : $this->downloadPlugins;
         $this->downloadThemes = !empty($conf['downloadThemes']) ? $conf['downloadThemes'] : $this->downloadThemes;
@@ -223,8 +222,6 @@ class Config
         $this->conf['useSelenoid'] = $this->useSelenoid;
         $this->conf['language'] = $this->language;
         $this->conf['imagePath'] = $this->imagePath;
-        $this->conf['envvars'] = $this->envvars;
-        $this->conf['ftp'] = $this->ftp;
         $this->conf['ssh'] = $this->ssh;
         $this->conf['downloadPlugins'] = $this->downloadPlugins;
         $this->conf['downloadThemes'] = $this->downloadThemes;
@@ -246,7 +243,6 @@ class Config
             'language' => 'en_US',
             'imagePath' => '',
             'envvars' => [],
-            'ftp' => [],
             'ssh' => [],
             'downloadPlugins' => [],
             'downloadThemes' => [],

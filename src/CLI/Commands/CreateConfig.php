@@ -39,13 +39,22 @@ class CreateConfig implements Runner
      */
     public function run(): void {
         try {
+            $file = Client::getAbsPath() . '/codecept-docker.json';
+            if (file_exists($file)) {
+                Logger::error('File at ' . Logger::yellow($file) . ' already exists. Aborting.');
+                return;
+            }
             $config = self::createConfig((string)$this->args->getOpt('type'), (string)$this->args->getOpt('namespace'));
-            file_put_contents(
-                Client::getAbsPath() . '/codecept-docker.json',
-                json_encode($config, JSON_PRETTY_PRINT)
-            );
+            $result = file_put_contents($file, json_encode($config, JSON_PRETTY_PRINT));
+            if ($result === false) {
+                Logger::error('Failed creating file: ' . Logger::yellow($file));
+                return;
+            }
+            Logger::info('Created file: ' . Logger::yellow($file));
+            Logger::info('---------------------------------------------------------------');
+            Logger::info('Now run ' . Logger::green('aivec-codecept bootstrap') . ' to complete the setup process.');
         } catch (InvalidConfigException $e) {
-            (new Logger())->configError($e);
+            Logger::configError($e);
             exit(1);
         }
     }
@@ -65,7 +74,7 @@ class CreateConfig implements Runner
         $config['projectType'] = $project_type;
         ConfigValidator::validateConfig($config);
         if (empty($namespace)) {
-            (new Logger())->warn('no "namespace" field provided, defaulting to project directory name');
+            Logger::info(Logger::yellow('namespace') . ' field not provided, defaulting to project directory name ' . Logger::green($config['namespace']));
         }
 
         return $config;
