@@ -52,7 +52,7 @@ class SelenoidVideoRecorder extends Module
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @param array $payload
-     * @return string
+     * @return null|string
      */
     public function dockerExecRegisterCommand($payload) {
         $payload = array_merge(
@@ -78,6 +78,9 @@ class SelenoidVideoRecorder extends Module
             $output,
             $status
         );
+        if (empty($output)) {
+            return null;
+        }
         $execId = json_decode($output[0], true)['Id'];
 
         return $execId;
