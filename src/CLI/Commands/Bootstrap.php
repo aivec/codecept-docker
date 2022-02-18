@@ -144,11 +144,12 @@ class Bootstrap implements Runner
      * @return void
      */
     public function installModules() {
-        $this->logHeader('Installing Codeception modules');
-        $this->installModule('codeception/module-db');
-        $this->installModule('codeception/module-phpbrowser');
-        $this->installModule('codeception/module-cli');
-        $this->installModule('codeception/module-asserts');
+        $vconstraint = ':^1.0';
+        $this->logHeader('Installing Codeception modules', false);
+        $this->installModule('codeception/module-db', $vconstraint);
+        $this->installModule('codeception/module-phpbrowser', $vconstraint);
+        $this->installModule('codeception/module-cli', $vconstraint);
+        $this->installModule('codeception/module-asserts', $vconstraint);
     }
 
     /**
@@ -268,7 +269,7 @@ class Bootstrap implements Runner
         $this->copyFileToCwd("{$this::$vendordir}/conf/selenium-bridge.suite.yml", "{$workingdir}/tests/selenium-bridge.suite.yml");
         $this->copyFileToCwd("{$this::$vendordir}/conf/selenium-localhost.suite.yml", "{$workingdir}/tests/selenium-localhost.suite.yml");
         $this->copyFileToCwd("{$this::$vendordir}/conf/browsers.json", "{$workingdir}/tests/browsers.json");
-        $this->installModule('codeception/module-webdriver');
+        $this->installModule('codeception/module-webdriver', ':^1.0');
     }
 
     /**
@@ -313,13 +314,14 @@ class Bootstrap implements Runner
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @param string $package
+     * @param string $vconstraint
      * @return void
      */
-    public function installModule($package) {
+    public function installModule($package, $vconstraint = '') {
         exec("composer show {$package} 2>/dev/null", $out, $code);
         if ($code === 1) {
             Logger::info('Installing ' . Logger::yellow($package) . '...');
-            passthru("composer require {$package} --dev -q");
+            passthru("composer require {$package}{$vconstraint} --dev -q");
             return;
         }
 
@@ -331,10 +333,13 @@ class Bootstrap implements Runner
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @param string $text
+     * @param bool   $newline
      * @return void
      */
-    public function logHeader($text) {
-        print "\n";
+    public function logHeader($text, $newline = true) {
+        if ($newline) {
+            print "\n";
+        }
         Logger::info("{$this::$stepheader} {$text} {$this::$stepheader}");
     }
 
