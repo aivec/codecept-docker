@@ -149,7 +149,7 @@ class Bootstrap implements Runner
         $this->installModule('codeception/module-db', $vconstraint);
         $this->installModule('codeception/module-phpbrowser', $vconstraint);
         $this->installModule('codeception/module-cli', $vconstraint);
-        $this->installModule('codeception/module-asserts', $vconstraint);
+        $this->installModule('codeception/module-asserts', $vconstraint . ' -W');
     }
 
     /**
@@ -314,14 +314,14 @@ class Bootstrap implements Runner
      *
      * @author Evan D Shaw <evandanielshaw@gmail.com>
      * @param string $package
-     * @param string $vconstraint
+     * @param string $options
      * @return void
      */
-    public function installModule($package, $vconstraint = '') {
+    public function installModule($package, $options = '') {
         exec("composer show {$package} 2>/dev/null", $out, $code);
         if ($code === 1) {
             Logger::info('Installing ' . Logger::yellow($package) . '...');
-            passthru("composer require {$package}{$vconstraint} --dev -q");
+            passthru("composer require {$package}{$options} --dev -q");
             return;
         }
 
