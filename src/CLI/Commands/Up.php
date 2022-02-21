@@ -112,6 +112,28 @@ class Up implements Runner
         // build custom aivec/selenoid-video-recorder image
         passthru("docker build -t aivec/selenoid-video-recorder -f {$vendordir}/docker/video-recorder/Dockerfile.video-recorder {$vendordir}/docker/video-recorder");
 
+        // pull selenoid browser images if necessary
+        if ($conf->useSelenoid) {
+            $bfile = "{$workingdir}/tests/browsers.json";
+            if (file_exists($bfile)) {
+                $bfilec = file_get_contents($bfile);
+                if (!empty($bfilec)) {
+                    $bfilejson = json_decode($bfilec, true);
+                    foreach ($bfilejson as $bname => $browser) {
+                        if (!empty($browser['versions'])) {
+                            Logger::info("Pulling selenoid browser ({$bname}) images for Selenium WebDriver suites...");
+                            foreach ($browser['versions'] as $version => $config) {
+                                if (!empty($config['image'])) {
+                                    $bimage = $config['image'];
+                                    passthru("docker image pull {$bimage}");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // create CodeceptDocker network for WordPress and MySQL container
         passthru("docker network create --attachable {$conf::$network}");
 
