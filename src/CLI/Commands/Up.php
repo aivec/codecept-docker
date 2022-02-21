@@ -101,10 +101,9 @@ class Up implements Runner
         // build WordPress docker image
         $wpimage = "wpcodecept:latest-{$conf->phpVersion}";
         if (!empty($conf->imagePath)) {
-            $pieces = explode('/', $conf->imagePath);
-            $fnamepieces = explode('.tar', $pieces[count($pieces) - 1]);
-            $wpimage = $fnamepieces[0];
-            passthru("docker load -i {$conf->imagePath}");
+            exec("docker load -i {$conf->imagePath}", $output);
+            $message = explode(':', $output[0]);
+            $wpimage = trim($message[1]);
         } else {
             passthru("docker build -t {$wpimage} -f {$vendordir}/docker/Dockerfile.php{$conf->phpVersion} {$vendordir}");
         }
