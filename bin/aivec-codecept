@@ -31,9 +31,7 @@ $cli = Cli::create()
     ->command('codecept')
         ->description('Calls and passes args to codecept script from within the WordPress Docker container')
     ->command('wp-cli')
-        ->description('Runs and passes command/arguments to wp-cli from within the WordPress Docker container')
-    ->command('update')
-        ->description('Updates WordPress Docker image to latest');
+        ->description('Runs and passes command/arguments to wp-cli from within the WordPress Docker container');
 
 // Parse and return cli args.
 $args = $cli->parse($argv, true);
@@ -77,8 +75,5 @@ switch ($argv[1]) {
         break;
     case 'wp-cli':
         (new Client(new Config($conf)))->wpcli($argv);
-        break;
-    case 'update':
-        Commands\Update::update();
         break;
 }
