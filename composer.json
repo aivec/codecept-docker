@@ -32,5 +32,10 @@
     "lint": "phpcs -s --standard=Aivec-Core-7 src",
     "lint:fix": "phpcbf --standard=Aivec-Core-7 src",
     "test": "phpunit tests"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
   }
 }
