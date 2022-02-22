@@ -197,7 +197,7 @@ class SelenoidVideoRecorder extends Module
     public function _before(TestInterface $test) {
         $this->setup();
 
-        $this->videoFileName = $test->getMetadata()->getName();
+        $this->videoFileName = join('.', explode(' ', $test->getMetadata()->getName()));
 
         // delete existing video
         $vidsdir = "{$_ENV['AVC_SRC_DIR']}/tests/_output/video";

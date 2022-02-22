@@ -1,14 +1,14 @@
 {
   "chrome": {
-    "default": "90.0",
+    "default": "98.0",
     "versions": {
-      "89.0": {
-        "image": "selenoid/chrome:89.0",
+      "97.0": {
+        "image": "selenoid/chrome:97.0",
         "port": "4444",
         "path": "/"
       },
-      "90.0": {
-        "image": "selenoid/chrome:90.0",
+      "98.0": {
+        "image": "selenoid/chrome:98.0",
         "port": "4444",
         "path": "/"
       }

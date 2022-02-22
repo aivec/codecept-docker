@@ -243,13 +243,13 @@ class Bootstrap implements Runner
         }
         $this->logHeader('Creating sample tests for each suite');
 
-        $this->client->codeceptFromHost('g:test unit Sample');
-        $this->client->codeceptFromHost('g:wpunit wpunit Sample');
-        $this->client->codeceptFromHost('g:cest acceptance Sample');
-        $this->client->codeceptFromHost('g:cest functional Sample');
+        $this->client->codeceptFromHost('g:test unit UnitSample');
+        $this->client->codeceptFromHost('g:wpunit wpunit WpUnitSample');
+        $this->client->codeceptFromHost('g:cest acceptance AcceptanceSample');
+        $this->client->codeceptFromHost('g:cest functional FunctionalSample');
         if ($this->client->getConfig()->useSelenoid) {
-            $this->client->codeceptFromHost('g:cest selenium-bridge Sample');
-            $this->client->codeceptFromHost('g:cest selenium-localhost Sample');
+            $this->client->codeceptFromHost('g:cest selenium-bridge SelBridgeSample');
+            $this->client->codeceptFromHost('g:cest selenium-localhost SelLocalhostSample');
         }
     }
 
