@@ -148,6 +148,13 @@ class Config
     public $integration_dbname;
 
     /**
+     * List of custom local scripts to be executed during container startup
+     *
+     * @var array
+     */
+    public $customInitScripts = [];
+
+    /**
      * SSH configs of plugins/themes to download
      *
      * @var array
@@ -219,6 +226,7 @@ class Config
         $this->useSelenoid = isset($conf['useSelenoid']) ? $conf['useSelenoid'] : $this->useSelenoid;
         $this->language = isset($conf['language']) ? $conf['language'] : $this->language;
         $this->imagePath = !empty($conf['imagePath']) ? $conf['imagePath'] : $this->imagePath;
+        $this->customInitScripts = !empty($conf['customInitScripts']) ? $conf['customInitScripts'] : $this->customInitScripts;
         $this->envvars = isset($conf['envvars']) && is_array($conf['envvars']) ? $conf['envvars'] : $this->envvars;
         $this->ssh = !empty($conf['ssh']) ? $conf['ssh'] : $this->ssh;
         $this->downloadPlugins = !empty($conf['downloadPlugins']) ? $conf['downloadPlugins'] : $this->downloadPlugins;
@@ -235,6 +243,7 @@ class Config
         $this->conf['useSelenoid'] = $this->useSelenoid;
         $this->conf['language'] = $this->language;
         $this->conf['imagePath'] = $this->imagePath;
+        $this->conf['customInitScripts'] = $this->customInitScripts;
         $this->conf['ssh'] = $this->ssh;
         $this->conf['downloadPlugins'] = $this->downloadPlugins;
         $this->conf['downloadThemes'] = $this->downloadThemes;
@@ -256,6 +265,7 @@ class Config
             'useSelenoid' => true,
             'language' => 'en_US',
             'imagePath' => '',
+            'customInitScripts' => [],
             'envvars' => [],
             'ssh' => [],
             'downloadPlugins' => [],

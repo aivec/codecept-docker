@@ -45,6 +45,7 @@ class ConfigValidator
                 ['language'],
                 ['useSelenoid'],
                 ['imagePath'],
+                ['customInitScripts'],
                 ['ssh'],
                 ['ftp'],
                 ['downloadPlugins'],
@@ -60,6 +61,7 @@ class ConfigValidator
                 ['useSelenoid'],
             ],
             'array' => [
+                ['customInitScripts'],
                 ['ssh'],
                 ['ftp'],
                 ['downloadPlugins'],

@@ -6,6 +6,9 @@
   "projectType": "plugin",
   "useSelenoid": true,
   "language": "en_US",
+  "customInitScripts": [
+    "./my-script.sh"
+  ],
   "envvars": {
     "key": "value"
   },

@@ -96,6 +96,17 @@ class Up implements Runner
         $volumes[] = "-v {$vendordir}/src/scripts/initwp.sh:/docker-entrypoint-initwp.d/initwp.sh";
         // mount custom scripts
         $volumes[] = "-v {$vendordir}/src/scripts:/avc-wpdocker-meta/scripts";
+
+        // add customInitScripts if defined
+        if (!empty($conf->customInitScripts)) {
+            foreach ($conf->customInitScripts as $scriptpath) {
+                $absscriptpath = (string)realpath($scriptpath);
+                $scriptname = basename($scriptpath);
+                $dockerUserScriptsDirpath = Config::AVC_USER_SCRIPTS_DIR;
+                $volumes[] = "-v {$absscriptpath}:{$dockerUserScriptsDirpath}/{$scriptname}";
+            }
+        }
+
         $volume = join(' ', $volumes);
 
         // build WordPress docker image
