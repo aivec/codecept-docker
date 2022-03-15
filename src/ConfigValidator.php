@@ -40,6 +40,7 @@ class ConfigValidator
             ],
             'optional' => [
                 ['wordpressVersion'],
+                ['mysqlVersion'],
                 ['phpVersion'],
                 ['language'],
                 ['useSelenoid'],
@@ -52,6 +53,7 @@ class ConfigValidator
             'ascii' => [
                 ['namespace'],
                 ['wordpressVersion'],
+                ['mysqlVersion'],
                 ['language'],
             ],
             'boolean' => [

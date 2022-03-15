@@ -112,8 +112,8 @@ class Up implements Runner
         passthru("docker build -t aivec/selenoid-video-recorder -f {$vendordir}/docker/video-recorder/Dockerfile.video-recorder {$vendordir}/docker/video-recorder");
 
         // pull selenoid browser images if necessary
+        $bfile = "{$workingdir}/tests/browsers.json";
         if ($conf->useSelenoid) {
-            $bfile = "{$workingdir}/tests/browsers.json";
             if (file_exists($bfile)) {
                 $bfilec = file_get_contents($bfile);
                 if (!empty($bfilec)) {
@@ -146,7 +146,7 @@ class Up implements Runner
             --env MYSQL_PASSWORD=admin \
             --env MYSQL_ROOT_PASSWORD=root \
             -v {$conf::$mysqldbv}:/var/lib/mysql \
-            mysql:5.7");
+            mysql:{$conf->mysqlVersion}");
 
         // create and run phpmyadmin container
         passthru("docker run -d --name {$conf::$phpmyadminc} \
@@ -225,13 +225,17 @@ class Up implements Runner
             {$wpimage}");
 
         if ($conf->useSelenoid) {
+            $bjson = '';
+            if (file_exists($bfile)) {
+                $bjson = "-v {$workingdir}/tests/browsers.json:/etc/selenoid/browsers.json:ro";
+            }
             passthru("docker run -d --name {$conf::$selenoidc} \
                 --network {$conf::$network} \
                 --expose {$conf::$selenoidPort} \
                 -v /var/run/docker.sock:/var/run/docker.sock \
                 -v {$workingdir}/tests/_output/video/:/opt/selenoid/video/ \
                 -v {$workingdir}/tests/_output/logs/:/opt/selenoid/logs/ \
-                -v {$workingdir}/tests/browsers.json:/etc/selenoid/browsers.json:ro \
+                {$bjson} \
                 -e OVERRIDE_VIDEO_OUTPUT_DIR={$workingdir}/tests/_output/video/ \
                 aerokube/selenoid:1.10.3 -container-network {$conf::$network} \
                 -log-output-dir /opt/selenoid/logs \

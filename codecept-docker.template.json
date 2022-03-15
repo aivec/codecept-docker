@@ -2,6 +2,7 @@
   "namespace": "sample",
   "wordpressVersion": "latest",
   "phpVersion": "7.4",
+  "mysqlVersion": "5.7",
   "projectType": "plugin",
   "useSelenoid": true,
   "language": "en_US",

@@ -95,7 +95,18 @@ class Config
     public $wordpressVersion = 'latest';
 
     /**
+     * MySQL version
+     *
+     * Default: `8.0`
+     *
+     * @var string
+     */
+    public $mysqlVersion = '8.0';
+
+    /**
      * PHP version number. One of `7.2`, `7.3`, `7.4`, or `8.0`
+     *
+     * Default: `7.4`
      *
      * @var string
      */
@@ -203,6 +214,7 @@ class Config
         $this->namespace = !empty($conf['namespace']) ? $conf['namespace'] : CLI\Client::getWorkingDirname();
         $this->projectType = $conf['projectType'];
         $this->wordpressVersion = !empty($conf['wordpressVersion']) ? $conf['wordpressVersion'] : $this->wordpressVersion;
+        $this->mysqlVersion = !empty($conf['mysqlVersion']) ? $conf['mysqlVersion'] : $this->mysqlVersion;
         $this->phpVersion = !empty($conf['phpVersion']) ? $conf['phpVersion'] : $this->phpVersion;
         $this->useSelenoid = isset($conf['useSelenoid']) ? $conf['useSelenoid'] : $this->useSelenoid;
         $this->language = isset($conf['language']) ? $conf['language'] : $this->language;
@@ -218,6 +230,7 @@ class Config
         $this->conf['namespace'] = $this->namespace;
         $this->conf['projectType'] = $this->projectType;
         $this->conf['wordpressVersion'] = $this->wordpressVersion;
+        $this->conf['mysqlVersion'] = $this->mysqlVersion;
         $this->conf['phpVersion'] = $this->phpVersion;
         $this->conf['useSelenoid'] = $this->useSelenoid;
         $this->conf['language'] = $this->language;
@@ -238,6 +251,7 @@ class Config
             'namespace' => '',
             'projectType' => '',
             'wordpressVersion' => 'latest',
+            'mysqlVersion' => '8.0',
             'phpVersion' => '7.4',
             'useSelenoid' => true,
             'language' => 'en_US',
