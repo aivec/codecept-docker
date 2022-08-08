@@ -122,8 +122,10 @@ class ConfigValidator
             foreach ($conf['ftp'] as $ftp) {
                 $v = new Validator($ftp);
                 $v->rules([
+                    'required' => [
+                        ['confpath'],
+                    ],
                     'optional' => [
-                        ['password'],
                         ['plugins'],
                         ['themes'],
                     ],
@@ -135,12 +137,31 @@ class ConfigValidator
                         ['plugins'],
                         ['themes'],
                     ],
+                    'fileNotFound' => 'confpath',
                 ]);
-                $v->rule('requiredWith', 'user', ['plugins', 'themes']);
-                $v->rule('requiredWith', 'host', ['plugins', 'themes']);
 
                 if (!$v->validate()) {
                     $errors = is_array($v->errors()) ? $v->errors() : [];
+                    throw new InvalidConfigException($errors);
+                }
+
+                $errors = [];
+                $confpath = (string)$ftp['confpath'];
+                $ftpcreds = json_decode(file_get_contents($confpath), true);
+                if ($ftpcreds === null) {
+                    throw new InvalidConfigException(['confpath' => ["{$confpath} does not contain valid JSON."]]);
+                }
+                if (empty($ftpcreds['host'])) {
+                    $errors['confpath'][] = '"host" must not be empty (' . $confpath . ')';
+                }
+                if (!isset($ftpcreds['user'])) {
+                    $errors['confpath'][] = '"user" is required (' . $confpath . ')';
+                }
+                if (!isset($ftpcreds['password'])) {
+                    $errors['confpath'][] = '"password" is required (' . $confpath . ')';
+                }
+
+                if (!empty($errors)) {
                     throw new InvalidConfigException($errors);
                 }
             }

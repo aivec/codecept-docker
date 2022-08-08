@@ -39,6 +39,7 @@ class Up implements Runner
     public function run(): void {
         try {
             ConfigValidator::validateConfig($this->client->getConfig()->conf);
+            $this->client->getConfig()->finalize();
             $this->up();
         } catch (InvalidConfigException $e) {
             Logger::configError($e);
@@ -188,9 +189,9 @@ class Up implements Runner
             ['relative-url']
         ), JSON_UNESCAPED_SLASHES), JSON_UNESCAPED_SLASHES));
         $envvars['DOWNLOAD_THEMES'] = trim(json_encode(json_encode($conf->downloadThemes, JSON_UNESCAPED_SLASHES), JSON_UNESCAPED_SLASHES));
-        $envvars['PLUGINS'] = join(' ', $conf->downloadPlugins);
+        $envvars['PLUGINS'] = '"' . join(' ', $conf->downloadPlugins) . '"';
         if (!empty($conf->downloadThemes)) {
-            $envvars['THEMES'] = join(' ', $conf->downloadThemes);
+            $envvars['THEMES'] = '"' . join(' ', $conf->downloadThemes) . '"';
         }
 
         // set default values for various WP envvars

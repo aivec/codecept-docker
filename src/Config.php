@@ -229,6 +229,7 @@ class Config
         $this->customInitScripts = !empty($conf['customInitScripts']) ? $conf['customInitScripts'] : $this->customInitScripts;
         $this->envvars = isset($conf['envvars']) && is_array($conf['envvars']) ? $conf['envvars'] : $this->envvars;
         $this->ssh = !empty($conf['ssh']) ? $conf['ssh'] : $this->ssh;
+        $this->ftp = !empty($conf['ftp']) ? $conf['ftp'] : $this->ftp;
         $this->downloadPlugins = !empty($conf['downloadPlugins']) ? $conf['downloadPlugins'] : $this->downloadPlugins;
         $this->downloadThemes = !empty($conf['downloadThemes']) ? $conf['downloadThemes'] : $this->downloadThemes;
         $this->container = "{$this->namespace}-wpcodecept-wordpress";
@@ -245,8 +246,33 @@ class Config
         $this->conf['imagePath'] = $this->imagePath;
         $this->conf['customInitScripts'] = $this->customInitScripts;
         $this->conf['ssh'] = $this->ssh;
+        $this->conf['ftp'] = $this->ftp;
         $this->conf['downloadPlugins'] = $this->downloadPlugins;
         $this->conf['downloadThemes'] = $this->downloadThemes;
+    }
+
+    /**
+     * Builds final configuration
+     *
+     * @author Evan D Shaw <evandanielshaw@gmail.com>
+     * @return Config
+     */
+    public function finalize(): Config {
+        if (!empty($this->ftp)) {
+            $ftp = [];
+            foreach ($this->ftp as $curftp) {
+                $confpath = (string)$curftp['confpath'];
+                $ftpcreds = json_decode(file_get_contents($confpath), true);
+                $curftp['host'] = $ftpcreds['host'];
+                $curftp['user'] = $ftpcreds['user'];
+                $curftp['password'] = $ftpcreds['password'];
+
+                $ftp[] = $curftp;
+            }
+            $this->ftp = $ftp;
+        }
+
+        return $this;
     }
 
     /**
@@ -268,6 +294,7 @@ class Config
             'customInitScripts' => [],
             'envvars' => [],
             'ssh' => [],
+            'ftp' => [],
             'downloadPlugins' => [],
             'downloadThemes' => [],
         ];
