@@ -160,14 +160,6 @@ class Up implements Runner
             -v {$conf::$mysqldbv}:/var/lib/mysql \
             mysql:{$conf->mysqlVersion}");
 
-        // create and run phpmyadmin container
-        passthru("docker run -d --name {$conf::$phpmyadminc} \
-            --network {$conf::$network} \
-            -p 33333:80 \
-            -e PMA_HOST={$conf::$mysqlc} \
-            -e MYSQL_ROOT_PASSWORD=root \
-            phpmyadmin/phpmyadmin");
-
         $envvars = $conf->envvars;
         $envvars['AVC_META_DIR'] = Config::AVC_META_DIR;
         $envvars['AVC_SCRIPTS_DIR'] = Config::AVC_SCRIPTS_DIR;
@@ -249,7 +241,7 @@ class Up implements Runner
                 -v {$workingdir}/tests/_output/logs/:/opt/selenoid/logs/ \
                 {$bjson} \
                 -e OVERRIDE_VIDEO_OUTPUT_DIR={$workingdir}/tests/_output/video/ \
-                aerokube/selenoid:1.10.3 -container-network {$conf::$network} \
+                aerokube/selenoid:1.11.0 -container-network {$conf::$network} \
                 -log-output-dir /opt/selenoid/logs \
                 -video-recorder-image aivec/selenoid-video-recorder");
         }
